@@ -1,4 +1,4 @@
-# One-Identity-Safeguard<br>
+# One Identity Safeguard for Privileged Passwords <br>
 One Identity 致力於提供帳號解決方案，在行業超過20年，全球有5000家以上的企業採用。One Identity 解決方案涵蓋 Identity Governance Administrator ( IGA ) 身分治理與管理、Privileged Access Management ( PAM ) 特權存取管理、Access Management ( AM ) 存取管理、2FA 雙因素驗證。<br>
 
 One Identity Safeguard 是一項整合方案，結合一個安全強固設計的密碼保險箱、連線管理、以及具備威脅偵測與分析能力的監控方案。它能夠安全的儲存、管理、記錄和分析特權存取。<br>
@@ -13,9 +13,11 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 
 完成部署後，使用者透過 SPP 提供的網頁服務申請連線，經由指定人員核准後，即可透過 SPS 登入到需要連線的伺服器，所有的過程都會被記錄下來，也可有效的阻隔使用者對伺服器的直接連線。
 
-![GITHUB](https://github.com/BrianHsing/One-Identity-Safeguard/blob/main/images/architecture.png "architecture")<br>
+![GITHUB](/images/architecture.png "architecture")<br>
 
-## 建置步驟 <br>
+## 前置作業 <br>
+
+## 部署流程 <br>
 
 ## 其他產品安裝 <br>
 
