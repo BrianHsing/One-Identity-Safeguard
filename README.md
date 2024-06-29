@@ -7,6 +7,8 @@ One Identity Safeguard 是一項整合方案，結合一個安全強固設計的
 
 ## 架構說明 <br>
 
+![GITHUB](https://github.com/BrianHsing/Azure-DDoS-Stress-Testing/blob/master/DDoSImage/signup.PNG "signup")<br>
+
 ## 建置步驟 <br>
 
 ## 其他產品安裝 <br>
