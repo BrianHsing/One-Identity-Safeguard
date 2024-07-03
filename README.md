@@ -28,7 +28,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   - SPP 到伺服器(納管伺服器建置可整個網段開通)。<br>
   |目標角色|協定|開Port|備註|
   |----|----|----|----|----|
-  |AD(DC)|TCP|135、389、445、636、3268、49152~65535|整合AD和納管AD用|
+  |AD(DC)|TCP|135、389、445、636、3268、49152-65535|整合AD和納管AD用|
   |Windows Server|TCP|135、445、49152~65535|納管用|
   |DNS|TCP/UDP|53|納管用|
   |NTP|TCP|123|時間校時|
