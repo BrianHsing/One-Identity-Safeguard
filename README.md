@@ -89,6 +89,6 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 - [管理者操作](/sgadmin.md)<br>
 - [使用者操作](/sguser.md)<br>
 ## 其他產品安裝 <br>
-
-
+- [Safeguard SCALUS 安裝](/scalus.md)<br>
+- [Safeguard Desktop Player安裝](/player.md)<br>
 
