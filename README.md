@@ -84,7 +84,10 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |SPS|TCP|443、22、3389|代豋連線用|
   
 ## 部署流程 <br>
-
+- [Privileged Passwords 密碼模組](/spp.md)<br>
+- [Privileged Sessions 側錄模組](/sps.md)<br>
+- [管理者操作](/sgadmin.md)<br>
+- [使用者操作](/sguser.md)<br>
 ## 其他產品安裝 <br>
 
 
