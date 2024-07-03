@@ -26,6 +26,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |RDS|遠端應用程式發佈主機|vCPU:4 core <br> RAM: 16 GB <br> Disk: 100 GB |1|需要準備 Windows Server <br> 有需要再準備|
 - 防火牆開通資訊。<br>
   - SPP 到伺服器(納管伺服器建置可整個網段開通)。<br>
+  
   |目標角色|協定|開Port|備註|
   |----|----|----|----|----|
   |AD(DC)|TCP|135、389、445、636、3268、49152-65535|整合AD和納管AD用|
