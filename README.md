@@ -25,10 +25,18 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |Defender|2FA驗證|vCPU:4 core <br> RAM: 16 GB <br> Disk: 100 GB |1|需要準備 Windows Server，提供安裝檔<br> 有需要再準備|
   |RDS|遠端應用程式發佈主機|vCPU:4 core <br> RAM: 16 GB <br> Disk: 100 GB |1|需要準備 Windows Server <br> 有需要再準備|
 - 防火牆開通資訊。<br>
-  - 特權系統到伺服器(納管伺服器建置可整個網段開通)。<br>
+  - SPP 到伺服器(納管伺服器建置可整個網段開通)。<br>
   
-  |來源角色|目標角色|協定|開Port|備註|
+  |目標角色|協定|開Port|備註|
   |----|----|----|----|----|
+  |AD(DC)|TCP|135、389、445、636、3268、49152~65535|整合AD和納管AD用|
+  |Windows Server|TCP|135、445、49152~65535|納管用|
+  |DNS|TCP/UDP|53|納管用|
+  |NTP|TCP|123||
+  |Mail Realy|TCP|25|發通知信|
+  |Redhat|TCP|22|納管用|
+  |KMS|TCP|1688|作業系統授權認證|
+  |AIX|TCP|22|納管用|
 
 ## 部署流程 <br>
 
