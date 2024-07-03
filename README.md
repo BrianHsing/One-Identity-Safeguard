@@ -18,6 +18,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 ## 前置作業 <br>
 
 - 系統導入所需要準備的資源如以下表格。<br>
+  
   |虛擬機器|角色說明|規格|數量|備註|
   |----|----|----|----|----|
   |SPP|密碼模組|vCPU:4 core <br> RAM: 10 GB <br> Disk: 100 GB |1|提供OVA或是VHD|
@@ -26,6 +27,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |RDS|遠端應用程式發佈主機|vCPU:4 core <br> RAM: 16 GB <br> Disk: 100 GB |1|需要準備 Windows Server <br> 有需要再準備|
 - 防火牆開通資訊。<br>
   - SPP 到伺服器(納管伺服器建置可整個網段開通)。<br>
+  
   |目標角色|協定|開Port|備註|
   |----|----|----|----|
   |AD(DC)|TCP|135、389、445、636、3268、49152-65535|整合AD和納管AD用|
@@ -37,7 +39,9 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |KMS|TCP|1688|作業系統授權認證|
   |AIX|TCP|22|納管用|
   |Defender|TCP|1812|驗證用|
+
   - SPS 到伺服器(納管伺服器建置可整個網段開通)。<br>
+  
   |目標角色|協定|開Port|備註|
   |----|----|----|----|
   |Windows Server|TCP|3389|連線代登用|
@@ -46,26 +50,34 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |DNS|TCP/UDP|53|名稱查詢|
   |NTP|TCP|25|發通知信|
   |Mail Realy|TCP|22|發通知信|
+
   - RDS 到伺服器(納管伺服器建置可整個網段開通)。<br>
+  
   |目標角色|協定|開Port|備註|
   |----|----|----|----|
   |AD|TCP|88、135、139、389、445、49152~65535|加入AD用|
   |DNS|TCP/UDP|53|連線代豋用|
   |NTP|UDP|123|連線代豋用|
   |根據AP協定的Port而定義|TCP|依據實際Port定義|AP主機代登入用|
+
   - Defender 到伺服器(納管伺服器建置可整個網段開通)。<br>
+  
   |目標角色|協定|開Port|備註|
   |----|----|----|----|
   |AD|TCP|389、636、3268|加入AD用|
+
 - 客戶端 ----> 特權系統。<br>
   - 管理者<br>
+  
   |目標角色|協定|開Port|備註|
   |----|----|----|----|
   |SPP|TCP|443|管理和申請登入用|
   |SPS|TCP|443、22、3389|代豋連線用|
   |備份主機|TCP|3389|管理用|
   |RDS|TCP|3389|管理用|
+
   - 一般使用者<br>
+  
   |目標角色|協定|開Port|備註|
   |----|----|----|----|
   |SPP|TCP|443|申請登入用|
