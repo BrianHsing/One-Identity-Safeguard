@@ -17,7 +17,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 
 ## 前置作業 <br>
 
-- 系統所需要的資源如以下表格。<br>
+- 系統導入所需要準備的資源如以下表格。<br>
   |虛擬機器|角色說明|規格|數量|備註|
   |----|----|----|----|----|
   |SPP|密碼模組|vCPU:4 core <br> RAM: 10 GB <br> Disk: 100 GB |1|提供OVA或是VHD|
