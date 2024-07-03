@@ -32,7 +32,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |AD(DC)|TCP|135、389、445、636、3268、49152~65535|整合AD和納管AD用|
   |Windows Server|TCP|135、445、49152~65535|納管用|
   |DNS|TCP/UDP|53|納管用|
-  |NTP|TCP|123||
+  |NTP|TCP|123|----|
   |Mail Realy|TCP|25|發通知信|
   |Redhat|TCP|22|納管用|
   |KMS|TCP|1688|作業系統授權認證|
