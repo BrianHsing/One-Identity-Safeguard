@@ -26,16 +26,16 @@
 - 選擇目的地，指定虛擬機器相關資料要存放的資料夾<br>
   ![GITHUB](/images/spp/6.png "選擇目的地")<br>
 - 選擇磁碟要存放的資料夾<br>
-  [GITHUB](/images/spp/7.png "選擇磁碟要存放的資料夾")<br>
+  ![GITHUB](/images/spp/7.png "選擇磁碟要存放的資料夾")<br>
 - 選擇 X0 實際使用的網路介面<br>
-  [GITHUB](/images/spp/8.png "擇 X0 實際使用的網路介面")<br>
+  ![GITHUB](/images/spp/8.png "擇 X0 實際使用的網路介面")<br>
 - 選擇 MGMT 的網路介面(實際無使用)<br>
-  [GITHUB](/images/spp/9.png "選擇 MGMT 的網路介面")<br>
+  ![GITHUB](/images/spp/9.png "選擇 MGMT 的網路介面")<br>
 - 檢查摘要，確認選擇無誤後，點選完成<br>
-  [GITHUB](/images/spp/10.png "檢查摘要")<br>
+  ![GITHUB](/images/spp/10.png "檢查摘要")<br>
 - 確認虛擬機器完成建立<br>
-  [GITHUB](/images/spp/11.png "確認虛擬機器完成建立")<br>
+  ![GITHUB](/images/spp/11.png "確認虛擬機器完成建立")<br>
 - 變更虛擬機器名稱為 SPP-Demo<br>
-  [GITHUB](/images/spp/12.png "更虛擬機器名稱為 SPP-Demo")<br>
+  ![GITHUB](/images/spp/12.png "更虛擬機器名稱為 SPP-Demo")<br>
 
 
