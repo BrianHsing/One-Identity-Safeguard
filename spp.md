@@ -1,14 +1,5 @@
 # Privileged Passwords 密碼模組 <br>
 
-## 部署步驟
-- 確認擁有 SPP 的匯入檔<br>
-  - Hyper-V 為 Safeguard.vhdx<br>
-  - VMware 爲 Safeguard-vmware-prod-x.x.x.x.ova<br>
-- 匯入至 Hyper-V 或 VMware 產生虛擬機器<br>
-- 使用 Console 初始 SPP 設定<br>
-- 使用瀏覽器登入 SPP <br>
-- 匯入 License <br>
-
 ## 使用 VMware 匯入(Comign Soon)
 
 ## 使用 Hyper-V 匯入 VHDX

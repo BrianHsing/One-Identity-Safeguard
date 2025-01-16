@@ -82,9 +82,20 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |----|----|----|----|
   |SPP|TCP|443|申請登入用|
   |SPS|TCP|443、22、3389|代豋連線用|
+
+## Privileged Passwords 密碼模組部署流程<br>
+- 部署步驟
+  - 確認擁有 SPP 的匯入檔<br>
+    - Hyper-V 為 Safeguard.vhdx<br>
+    - VMware 爲 Safeguard-vmware-prod-x.x.x.x.ova<br>
+  - 匯入至 Hyper-V 或 VMware 產生虛擬機器<br>
+  - 使用 Console 初始 SPP 設定<br>
+  - 使用瀏覽器登入 SPP <br>
+  - 匯入 License <br>
+
+- [Privileged Passwords 密碼模組](/spp.md)<br>
   
 ## 部署流程 <br>
-- [Privileged Passwords 密碼模組](/spp.md)<br>
 - [Privileged Sessions 側錄模組](/sps.md)<br>
 - [管理者操作](/sgadmin.md)<br>
 - [使用者操作](/sguser.md)<br>
