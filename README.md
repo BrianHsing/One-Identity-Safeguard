@@ -17,6 +17,9 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 
 ## 前置作業 <br>
 
+- One Identity 下載連結<br>
+  https://1drv.ms/f/s!AvZb8cMf7gfXhOhH1WXkYWzGFQBFUg<br>
+
 - 系統導入所需要準備的資源如以下表格。<br>
   
   |虛擬機器|角色說明|規格|數量|備註|
@@ -83,7 +86,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |SPP|TCP|443|申請登入用|
   |SPS|TCP|443、22、3389|代豋連線用|
 
-## Privileged Passwords 密碼模組部署流程<br>
+## Privileged Passwords 密碼模組部署<br>
 - 部署步驟
   - 確認擁有 SPP 的匯入檔<br>
     - Hyper-V 為 Safeguard.vhdx<br>
@@ -93,10 +96,16 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   - 使用瀏覽器登入 SPP <br>
   - 匯入 License <br>
 
-- [Privileged Passwords 密碼模組](/spp.md)<br>
-  
-## 部署流程 <br>
+- [Privileged Passwords 密碼模組匯入](/spp.md)<br>
+- [使用 Console 初始 SPP 設定](/sps_init.md)<br>
+- [使用瀏覽器登入 SPP 進行組態設定](/spp_web.md)<br>
+
+## Privileged Sessions 側錄模組部署 <br>
 - [Privileged Sessions 側錄模組](/sps.md)<br>
+
+## Privileged Passwords 密碼模組 與 Privileged Sessions 側錄模組整合 <br>
+
+## 操作手冊
 - [管理者操作](/sgadmin.md)<br>
 - [使用者操作](/sguser.md)<br>
 ## 其他產品安裝 <br>

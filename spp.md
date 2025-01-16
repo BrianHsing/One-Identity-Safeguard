@@ -1,4 +1,4 @@
-# Privileged Passwords 密碼模組 <br>
+# Privileged Passwords 密碼模組匯入 <br>
 
 ## 使用 VMware 匯入(Comign Soon)
 
@@ -30,3 +30,4 @@
   ![GITHUB](/images/spp/12.png "更虛擬機器名稱為 SPP-Demo")<br>
 
 
+繼續[使用 Console 初始 SPP 設定](/sps_init.md)<br>
