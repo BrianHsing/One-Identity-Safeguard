@@ -9,6 +9,10 @@
 - 授權可以在 https://1drv.ms/f/s!AvZb8cMf7gfXhOhH1WXkYWzGFQBFUg 開啟，並且在 License 資料夾找到開頭為 SPP 的 dlv 檔案<br>
   ![GITHUB](/images/spp/spp_web/3.png "授權")<br>
 - 授權版本必須與 SPP 版本一致，若授權無法正常指派，需要先進行修補程式更新<br>
+- 將授權從裝置上傳，過程中會需要你接受軟體交易合約<br>
+  ![GITHUB](/images/spp/spp_web/4.png "授權裝置上傳")<br>
+- 完成後，就可以看到 SPP 的授權狀態<br>
+  ![GITHUB](/images/spp/spp_web/5.png "授權狀態")<br>
 
 ## 修補程式更新
 
@@ -21,3 +25,5 @@
 - 跳出安裝更新的視窗，在方塊內輸入安裝之後，點選安裝的按鈕會立即開始更新作業<br>
   ![GITHUB](/images/spp/spp_web/9.png "安裝更新")<br>
   ![GITHUB](/images/spp/spp_web/10.png "安裝更新")<br>
+- 完成後，點選繼續即可，不需要重開 SPP<br>
+  ![GITHUB](/images/spp/spp_web/11.png "安裝更新")<br>
