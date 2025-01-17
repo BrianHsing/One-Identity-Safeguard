@@ -18,4 +18,4 @@
   ![GITHUB](/images/spp/spp_init/5.png "執行初始化作業")<br>
 - 點選 Continue 即可完成<br>
   ![GITHUB](/images/spp/spp_init/6.png "點選 Continue")<br>
-繼續[使用瀏覽器登入 SPP 進行組態設定](/spp_web.md)<br>
+繼續[使用瀏覽器登入 SPP 進行初始設定](/spp_web.md)<br>
