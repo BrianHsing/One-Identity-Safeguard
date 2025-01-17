@@ -98,7 +98,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 
 - [Privileged Passwords 密碼模組匯入](/spp.md)<br>
 - [使用 Console 初始 SPP 設定](/sps_init.md)<br>
-- [使用瀏覽器登入 SPP 進行組態設定](/spp_web.md)<br>
+- [使用瀏覽器登入 SPP 進行初始設定](/spp_web.md)<br>
 
 ## Privileged Sessions 側錄模組部署 <br>
 - [Privileged Sessions 側錄模組](/sps.md)<br>
