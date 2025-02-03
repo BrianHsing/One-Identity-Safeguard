@@ -1,4 +1,4 @@
-# Privileged Sessions 側錄模組安裝 <br>
+# Privileged Sessions 側錄模組安裝
 
 ## 使用 VMware 建立(Comign Soon)
 

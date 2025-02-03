@@ -13,7 +13,8 @@
 - 設定 eth0 的預設閘道 ````route add default gw <IP-of-default-gateway> ```` <br>
   ![GITHUB](/images/sps/sps_init/6.png "設定 eth0 的預設閘道")<br>
 - 輸入 exit 離開 Core shell 介面<br>
+- ![GITHUB](/images/sps/sps_init/7.png "輸入 exit 離開")<br>
 - 選擇 Logout 登出<br>
-  ![GITHUB](/images/sps/sps_init/7.png "選擇 Logout")<br>
+  ![GITHUB](/images/sps/sps_init/8.png "選擇 Logout")<br>
 
   - [使用瀏覽器登入 SPS](/sps_web.md)<br>
