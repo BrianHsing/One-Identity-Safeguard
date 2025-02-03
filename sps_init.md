@@ -17,4 +17,4 @@
 - 選擇 Logout 登出<br>
   ![GITHUB](/images/sps/sps_init/8.png "選擇 Logout")<br>
 
-  - [使用瀏覽器登入 SPS](/sps_web.md)<br>
+[使用瀏覽器登入 SPS](/sps_web.md)<br>
