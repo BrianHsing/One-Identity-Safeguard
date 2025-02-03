@@ -108,7 +108,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   - 使用瀏覽器登入 SPS <br>
 - [Privileged Sessions 側錄模組安裝](/sps.md)<br>
 - [使用 Console 初始 SPS 設定](/sps_init.md)<br>
-- [使用瀏覽器登入 SPS 設定](/sps_web.md)<br>
+- [使用瀏覽器登入 SPS 初始設定](/sps_web.md)<br>
 
 ## Privileged Passwords 密碼模組 與 Privileged Sessions 側錄模組整合
 
