@@ -97,11 +97,18 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   - 匯入 License <br>
 
 - [Privileged Passwords 密碼模組匯入](/spp.md)<br>
-- [使用 Console 初始 SPP 設定](/sps_init.md)<br>
+- [使用 Console 初始 SPP 設定](/spp_init.md)<br>
 - [使用瀏覽器登入 SPP 進行初始設定](/spp_web.md)<br>
 
 ## Privileged Sessions 側錄模組部署 <br>
-- [Privileged Sessions 側錄模組](/sps.md)<br>
+- 部署步驟
+  - 建立 vCPU:4 core/RAM: 32 GB/Disk: 100 GB 的虛擬機器<br>
+  - 掛載 SPS ISO 檔，此檔案可以 https://1drv.ms/f/s!AvZb8cMf7gfXhOhH1WXkYWzGFQBFUg 下載，路徑為 One Identity Safeguard > SPS > 8<br>
+  - 使用 Console 初始 SPS 設定<br>
+  - 使用瀏覽器登入 SPS <br>
+- [Privileged Sessions 側錄模組安裝](/sps.md)<br>
+- [使用 Console 初始 SPS 設定](/sps_init.md)<br>
+- [使用瀏覽器登入 SPS](/sps_web.md)<br>
 
 ## Privileged Passwords 密碼模組 與 Privileged Sessions 側錄模組整合 <br>
 
