@@ -1,4 +1,4 @@
-# 使用瀏覽器登入 SPS 設定
+# 使用瀏覽器登入 SPS 初始設定
 
 - 使用瀏覽器登入 SPS 網址 ````https://<你的IP>````<br>
   ![GITHUB](/images/sps/sps_web/1.png "用瀏覽器登入 SPS")<br>
