@@ -118,7 +118,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 - [Windows 登入](/sguser.md)<br>
 - [Linux 登入](/sguser.md)<br>
 
-## SPP 管理者進階設定 (option) Coming Soon
+## SPP 管理者進階設定 Coming Soon (option)
 - [新增服務帳戶]()<br>
 - [資產變更密碼設定]()<br>
 - [密碼原則設定]()<br>
@@ -126,7 +126,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 - [Active Directory 整合]()<br>
 - [Microsoft Entra ID 整合]()<br>
 
-## SPS 管理者進階設定 (option) Coming Soon
+## SPS 管理者進階設定 Coming Soon (option)
 - [OCR 設定與套用]()<br>
 - [備份與封存原則]()<br>
 - [稽核資料清理原則]()<br>
@@ -136,7 +136,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 
 ## 整合 One Identity Defender 架構 Coming Soon
 
-## 其他電腦本機端安裝說明 <br>
+## 其他電腦本機端安裝說明 Coming Soon <br>
 - [Safeguard SCALUS 安裝](/scalus.md)<br>
 - [Safeguard Desktop Player安裝](/player.md)<br>
 
