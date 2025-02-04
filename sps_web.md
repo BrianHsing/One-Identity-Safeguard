@@ -13,3 +13,5 @@
   ![GITHUB](/images/sps/sps_web/5.png "建立 SPS 的主機自我簽署憑證")<br>
 - 確認資訊無誤後，點選 Finish 完成<br>
   ![GITHUB](/images/sps/sps_web/6.png "完成")<br> 
+
+  [SPS 側錄模組整合 SPP 密碼模組](/sppsps.md)<br>

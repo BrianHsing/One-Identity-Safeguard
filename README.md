@@ -86,8 +86,8 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   |SPP|TCP|443|申請登入用|
   |SPS|TCP|443、22、3389|代豋連線用|
 
-## Privileged Passwords 密碼模組部署
-- 部署步驟
+## Safeguard 部署
+- SPP 部署步驟
   - 確認擁有 SPP 的匯入檔<br>
     - Hyper-V 為 Safeguard.vhdx<br>
     - VMware 爲 Safeguard-vmware-prod-x.x.x.x.ova<br>
@@ -95,24 +95,20 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   - 使用 Console 初始 SPP 設定<br>
   - 使用瀏覽器登入 SPP <br>
   - 匯入 License <br>
-- [Privileged Passwords 密碼模組匯入](/spp.md)<br>
-- [使用 Console 初始 SPP 設定](/spp_init.md)<br>
-- [使用瀏覽器登入 SPP 進行初始設定](/spp_web.md)<br>
-
-## Privileged Sessions 側錄模組部署
-- 部署步驟
+  - Step1.[Privileged Passwords 密碼模組匯入](/spp.md)<br>
+  - Step2.[使用 Console 初始 SPP 設定](/spp_init.md)<br>
+  - Step3.[使用瀏覽器登入 SPP 進行初始設定](/spp_web.md)<br>
+- SPS 部署步驟
   - 建立 vCPU:4 core/RAM: 32 GB/Disk: 100 GB 的虛擬機器<br>
   - 掛載 SPS ISO 檔，此檔案可以 https://1drv.ms/f/s!AvZb8cMf7gfXhOhH1WXkYWzGFQBFUg 下載，路徑為 One Identity Safeguard > SPS > 8<br>
   - 使用 Console 初始 SPS 設定<br>
   - 使用瀏覽器登入 SPS <br>
-- [Privileged Sessions 側錄模組安裝](/sps.md)<br>
-- [使用 Console 初始 SPS 設定](/sps_init.md)<br>
-- [使用瀏覽器登入 SPS 初始設定](/sps_web.md)<br>
+  - Step1.[Privileged Sessions 側錄模組安裝](/sps.md)<br>
+  - Step2.[使用 Console 初始 SPS 設定](/sps_init.md)<br>
+  - Step3.[使用瀏覽器登入 SPS 初始設定](/sps_web.md)<br>
+- [SPS 側錄模組整合 SPP 密碼模組](/sppsps.md)<br>
 
-## Privileged Passwords 密碼模組與 Privileged Sessions 側錄模組整合
-
-- [SPS 側錄模組整合 SPP 密碼模組](/sppsps.md)
-- 
+##
 
 ## 管理者操作
 - [管理者操作](/sgadmin.md)<br>
