@@ -119,6 +119,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 - [資產變更密碼設定]()<br>
 - [密碼原則設定]()<br>
 - [備份]()<br>
+- [Active Directory 整合]()<br>
 - [Microsoft Entra ID 整合]()<br>
 
 ## SPS 管理者進階操作
