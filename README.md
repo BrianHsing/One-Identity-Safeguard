@@ -119,7 +119,7 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 
 5.將 Windows 和 Linux 這兩台機器可以讓`u01`申請存取 RDP 與 SSH 連線，並且要通過`a01`核准才能連線<br>
 - [建立額外的管理者與一般使用者帳號](/spp_user.md)<br>
-- [新增資產]()<br>
+- [新增資產](/spp_asset.md)<br>
 - [新增帳戶]()<br>
 - [新增權利]()<br>
 
