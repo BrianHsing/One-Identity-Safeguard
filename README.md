@@ -102,8 +102,23 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
   - [使用瀏覽器登入 SPS 初始設定](/sps_web.md)<br>
 - [SPS 側錄模組整合 SPP 密碼模組](/sppsps.md)<br>
 
-## SPP 管理者設定 Coming Soon
-- [建立額外的管理者與一般使用者帳號]()<br>
+## SPP 管理者設定
+
+將環境設置好之後，就會需要將我們現有環境納管到特權帳號管理系統中。此節範例，預計將兩台機器納管，可以變更所指定的特權帳號密碼、指定使用者存取。<br>
+在這小節，會建立的事情如下：<br>
+1.建立額外管理者`sgadmin`用於管理特權帳號、設定組態，作為管理者的角色<br>
+2.建立一般使用者`u01`用於登入特權平台、申請存取機器，作為內部使用者或外部廠商的角色<br>
+3.建立一般使用者`a01`用於登入特權平台、核准存取行為，作為內部承辦或機器管理者的角色<br>
+4.納管機器 Windows 和 Linux 各一台<br>
+  - Windows : 10.16.10.151<br>
+    - 用於變更密碼:(特權帳號: Administrator | 密碼: 1qaz@WSX)<br>
+    - 用於登入:(特權帳號: LoginUser | 密碼: 1qaz@WSX)
+  - Linux : 10.16.10.156<br>
+    - 用於變更密碼:(特權帳號: Root | 密碼: 1qaz@WSX)<br>
+    - 用於登入:(特權帳號: loginuser | 密碼: 1qaz@WSX)<br>
+5.將 Windows 和 Linux 這兩台機器可以讓`u01`申請存取 RDP 與 SSH 連線，並且要通過`a01`核准才能連線<br>
+
+- [建立額外的管理者與一般使用者帳號](/spp_user.md)<br>
 - [新增資產]()<br>
 - [新增帳戶]()<br>
 - [新增權利]()<br>
