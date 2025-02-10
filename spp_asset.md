@@ -17,4 +17,4 @@
   ![GITHUB](/images/spp/spp_asset/6.png "資產列表")
   - 現在請您透過上述的步驟，試著將 Linux 機器加入到資產列表中。
 
-[新增帳戶](/spp_account.md)<br>
+前往[新增帳戶](/spp_account.md)<br>
