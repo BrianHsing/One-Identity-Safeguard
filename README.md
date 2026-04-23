@@ -123,9 +123,11 @@ One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Saf
 - [新增帳戶](/spp_account.md)<br>
 - [新增權利]()<br>
 
-## 使用者操作流程 Coming Soon
-- [Windows 登入](/sguser.md)<br>
-- [Linux 登入](/sguser.md)<br>
+## 使用者操作 Demo
+- [使用者申請存取](https://www.youtube.com/watch?v=Ousy0D3MnaU)<br>
+- [核准存取](https://youtu.be/lsCX_STG74E)<br>
+- [RDP 登入](https://youtu.be/R6kUTNejamQ)<br>
+- [SSH 登入](https://youtu.be/5afc9vUnVsI)<br>
 
 ## SPP 管理者進階設定 Coming Soon (option)
 - [新增服務帳戶]()<br>
