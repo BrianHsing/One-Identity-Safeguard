@@ -118,3 +118,10 @@ SPP 處理申請與核准，SPS 依連線及通道原則代理工作階段。是
 
 - [Safeguard SCALUS 安裝](/scalus.md)<br>
 - [Safeguard Desktop Player安裝](/player.md)<br>
+
+## 知識庫（KB）
+
+[KB 目錄](docs/kb/README.md)收錄既有文件與問題處理指引。
+
+- [SPP 外部 Federation：AADSTS75011](docs/kb/spp-federation-aadsts75011.md)
+- [RDP 工作階段重新導向本機磁碟](docs/kb/safeguard-rdp-drive-redirection.md)
