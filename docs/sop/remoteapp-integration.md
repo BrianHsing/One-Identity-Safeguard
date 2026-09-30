@@ -90,19 +90,19 @@ Windows Server 資產用來連線至發佈主機；應用程式資產及帳戶�
 
 到 `安全性原則管理 > 權利 > 存取要求原則` 建立專用原則。在「一般」選「工作階段」，再選「RDP 應用程式」。名稱建議能辨識工具，例如 ApexOne-RemoteApp；不要直接改動共用一般 RDP 原則。
 
-![SPP RDP 應用程式類型](../../images/sop/spp-remoteapp-type.png)
+![SPP RDP 應用程式類型](../../images/sop/spp-remoteapp-type.jpg)
 
 圖 4：新拍的未儲存表單，已選到 RDP 應用程式；名稱仍是既有 RDP，僅用於顯示選項。拍完已捨棄，沒有建立 ApexOne 原則。
 
 切到「安全性」，核對 SPS 連線原則，再選擇承載程式的 RDP 主機資產。主機認證需求須依環境設定，不把圖中空白或未勾選視為建議值。
 
-![SPP SPS 連線原則與 RDP 主機資產](../../images/sop/spp-remoteapp-host.png)
+![SPP SPS 連線原則與 RDP 主機資產](../../images/sop/spp-remoteapp-host.jpg)
 
 圖 5：可見 SPS 連線原則、RDP 主機資產與「需要主機帳戶」。圖中 safeguard_rdp 是原表單帶入的值；主機仍空白，不是完成設定。
 
 往下設定顯示名稱，選擇「使用應用程式別名」或「使用應用程式路徑和命令行」。以已發佈的 ApexOne 別名流程為例，別名須與發佈主機一致，包含 `||` 前綴。兩種模式擇一，不把別名填到檔案路徑欄位。[官方別名與命令列欄位說明](https://support.oneidentity.com/it-it/technical-documents/one-identity-safeguard/8.0%20lts/administration-guide/101)。
 
-![SPP 應用程式別名欄位](../../images/sop/spp-remoteapp-alias.png)
+![SPP 應用程式別名欄位](../../images/sop/spp-remoteapp-alias.jpg)
 
 圖 6：新拍的別名模式表單；別名尚未填入。只有圖 3 能證明來源案例存在 ApexOne 發佈項目，不能將兩張圖拼成同一環境已整合成功的證據。
 
@@ -116,11 +116,11 @@ Windows Server 資產用來連線至發佈主機；應用程式資產及帳戶�
 
 到 `Traffic Controls > RDP > Channel Policies`。正式導入以專用原則配置，避免修改共用原則影響既有連線。以下新圖檢視的是現場 safeguard_default，不代表應將所有正式連線共用它。
 
-![SPS Drawing 與側錄設定](../../images/sop/sps-remoteapp-drawing.png)
+![SPS Drawing 與側錄設定](../../images/sop/sps-remoteapp-drawing.jpg)
 
 圖 8：原則名稱 safeguard_default 可見，Drawing 的 Record audit trail 已勾選。這只證明配置，尚未證明有可播放的 RemoteApp 側錄。
 
-![SPS Dynamic virtual channel 與 Custom 通道](../../images/sop/sps-remoteapp-channels.png)
+![SPS Dynamic virtual channel 與 Custom 通道](../../images/sop/sps-remoteapp-channels.jpg)
 
 圖 9：同一原則下方可見 Dynamic virtual channel，以及 Custom 的三筆 Permitted channels：rail、rail_ri、rail_wi。原則名稱因捲動不在此圖，與圖 8 配對閱讀。下方 Clipboard 是現場既有值，不是本篇要求必須開放。
 
