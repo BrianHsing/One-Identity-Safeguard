@@ -65,7 +65,7 @@ $env:PSModulePath -split [IO.Path]::PathSeparator
 | 欄位 | 原圖內容 |
 |---|---|
 | Name／Full Name | ApexOne |
-| Program Path | `||ApexOne` |
+| Program Path | `\|\|ApexOne` |
 | Command Line | 見下方 |
 
 ```text
