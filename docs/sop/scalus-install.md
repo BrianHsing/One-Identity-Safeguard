@@ -6,7 +6,7 @@
 
 ## 適用範圍
 
-Windows 操作方式依 OneIdentity/SCALUS 官方儲存庫 README；搭配本專案 SPP 8.0 LTS 工作階段。SCALUS 是獨立工具，其版本不等於 SPP 版本。
+Windows 安裝與啟動方式依 OneIdentity/SCALUS 官方儲存庫 README；下列設定截圖來自本機既有 SCALUS 1.1.0.470。本次專案管理環境為 SPP 9.0.0.2807／SPS 9.0.0，但未完成 SCALUS 與該環境的連線驗收。SCALUS 是獨立工具，其版本不等於 SPP 版本。
 
 ## 前置條件
 
@@ -15,6 +15,10 @@ Windows 操作方式依 OneIdentity/SCALUS 官方儲存庫 README；搭配本專
 ## 操作步驟
 
 > 截圖範圍：2026-09-30 開啟本機既有 SCALUS，拍攝協定總覽、RDP 與 SSH 應用程式欄位。執行檔版本為 1.1.0.470（本機檔案中繼資料）；未重新安裝、變更設定或執行連線驗收。完整界線見[截圖與驗證範圍](environment-evidence.md)。
+
+### 安裝與驗收流程概覽（未逐步實測）
+
+已安裝者可直接從下方「本機協定對應總覽」開始核對。以下保留完整流程方向；本篇尚未提供 MSI 安裝精靈、SPP 啟動選項及連線成功畫面的逐步證據。
 
 1. 從官方 Releases 下載 Windows MSI，完成安裝。官方 README 說明預設位於 `C:\Program Files\SCALUS` 並建立開始功能表捷徑。
 2. 由開始功能表開啟 SCALUS。工具會在瀏覽器啟動本機設定介面。
@@ -26,6 +30,8 @@ Windows 操作方式依 OneIdentity/SCALUS 官方儲存庫 README；搭配本專
 ### 本機協定對應總覽
 
 由開始功能表開啟 **SCALUS**，瀏覽器會顯示本機設定頁。本次網址是 `http://localhost:38493/index.html`，連接埠僅為此次觀察值；操作時使用工具實際開啟的頁面，不要把此網址當成所有電腦的固定入口。官方啟動方式見本文末的 README。
+
+**圖 1：協定總覽。** 上排核對 RDP／SSH 對應名稱；下排 **Manage Applications** 卡片的 **Manage** 是進入應用程式欄位的入口。
 
 ![本機 SCALUS 協定與設定入口](../../images/sop/scalus-protocols.jpg)
 
@@ -41,14 +47,22 @@ Windows 操作方式依 OneIdentity/SCALUS 官方儲存庫 README；搭配本專
 | Exec | `C:\windows\system32\mstsc.exe` |
 | Args | `%GeneratedFile%` |
 | Parser ID | `rdp` |
+
+
+**圖 2：RDP 設定上半部。** 上表欄位皆可在此圖找到；範本選項需向下捲動，見圖 3。
+
+![RDP 執行路徑與參數](../../images/sop/scalus-rdp-application.jpg)
+
+向下捲動同一個對話方塊，核對下表。
+
+| 欄位 | 本機觀察值 |
+|---|---|
 | Options | `waitforexit` |
 | Use Default Template | 已勾選 |
 | Use Template File | 空白 |
 | Post Processing Exec／Args | 空白 |
 
-![RDP 執行路徑與參數](../../images/sop/scalus-rdp-application.jpg)
-
-向下捲動同一個對話方塊，可看到範本與後處理欄位。
+**圖 3：同一筆 RDP 設定的下半部。** 圖中最下方 `windows-rdp` 是下一筆收合的應用程式，並非目前範本的名稱。
 
 ![RDP 預設範本與後處理欄位](../../images/sop/scalus-rdp-template.jpg)
 
@@ -65,6 +79,8 @@ Windows 操作方式依 OneIdentity/SCALUS 官方儲存庫 README；搭配本專
 | Args | `-ssh,%user%@%host%` |
 | Parser ID | `ssh` |
 | Use Default Template | 未勾選 |
+
+**圖 4：SSH 設定中段。** 捲動後頂端的 `putty-ssh` 標題與 ID 已移出畫面；本圖以 **Name = Putty**、**Protocol = ssh** 識別目前項目。下方提示框是 Parser ID 的滑鼠提示，不是錯誤訊息。
 
 ![SSH 的 PuTTY 路徑與 URI 變數](../../images/sop/scalus-ssh-application.jpg)
 
