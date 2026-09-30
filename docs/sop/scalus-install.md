@@ -14,6 +14,8 @@ Windows 操作方式依 OneIdentity/SCALUS 官方儲存庫 README；搭配本專
 
 ## 操作步驟
 
+> 截圖範圍：本次連入 SPP／SPS 管理介面，沒有在用戶端執行本工具安裝或播放驗收。以下安裝程序保留原官方版本基準，不以管理網頁截圖冒充安裝精靈。實機已核對項目見[截圖與驗證範圍](environment-evidence.md)。
+
 1. 從官方 Releases 下載 Windows MSI，完成安裝。官方 README 說明預設位於 `C:\Program Files\SCALUS` 並建立開始功能表捷徑。
 2. 由開始功能表開啟 SCALUS。工具會在瀏覽器啟動本機設定介面。
 3. 檢查 RDP／SSH 對應的應用程式路徑確實存在。使用工具提供的設定與範例調整，不把實際密碼寫進命令列或設定檔。

@@ -6,7 +6,7 @@
 
 ## 適用範圍
 
-以下是 SPP 8.0 LTS 寫法。SPP 備份與 SPS 側錄保存是兩項工作，請另完成[SPS 備份與封存](sps-backup-archive.md)。
+畫面與中文操作名稱於 2026-09-30 以 SPP 9.0.0.2807 Web 用戶端核對；文末 8.0 LTS 官方文件作為原理參考，不代表所有 9.0 行為均已驗證。 SPP 備份與 SPS 側錄保存須分別驗收。
 
 ## 前置條件
 
@@ -14,7 +14,21 @@
 
 ## 操作步驟
 
-1. 到 `Appliance Management > Backup and Retention`，檢查 Backup protection settings 與備份排程。記錄目前版本、叢集角色與保護方式。
+### 從完成清單核對備份
+
+進入 `裝置管理 > 備份與保留`，展開「備份與還原」。同頁還有「封存伺服器」、「稽核記錄維護」與「備份保留」。
+
+![SPP 備份完成清單](../../images/sop/spp-backups.jpg)
+
+圖 1：既有自動備份清單。2026-09-30 14:50 的項目顯示完成、363.55 MB、版本 9.0.0.2807；不是本次手動建立的備份。
+
+核對「日期」、「進度」、「檔案大小」、「裝置版本」，再核對保護方式與離機保存結果。此清單可證明裝置曾產生備份紀錄，不能證明備份檔已離機或已還原成功。工具列齒輪用於備份設定，滑鼠移至圖示確認名稱後再操作，避免把上傳、下載、還原及封存混用。
+
+本次未下載備份、未執行還原，也未改動排程。正式驗收要另記下載或封存位置、檔案雜湊、解密材料保管人與隔離還原結果。
+
+### 實施與驗收
+
+1. 到 `裝置管理 > 備份與保留`，檢查 Backup protection settings 與備份排程。記錄目前版本、叢集角色與保護方式。
 2. 需要離機傳送時，先設定 Archive servers，再於備份設定選取目的地。
 3. 開啟 `Backup and Restore`，執行 `Run Now`。若要求加密密碼，透過核准的保密方式輸入。
 4. 等待工作完成，確認 `.sgb` 檔案已產生；下載或傳送至指定位置後，核對檔案時間、大小與可讀取性，將解密材料分開保存。
@@ -29,5 +43,6 @@
 
 ## 相關文件
 
+- [實機截圖與驗證範圍](environment-evidence.md)
 - [官方：SPP 8.0 LTS，Backup and Restore／Run Now](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/administration-guide/28)
 - [官方：SPP 8.0 LTS 管理指南](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0-lts/administration-guide)

@@ -6,7 +6,7 @@
 
 ## 適用範圍
 
-以下是 SPP 8.0 LTS 的納管帳戶 Password Profile 寫法，不是 SPP 平台使用者的登入密碼原則。
+畫面與中文操作名稱於 2026-09-30 以 SPP 9.0.0.2807 Web 用戶端核對；文末 8.0 LTS 官方文件作為原理參考，不代表所有 9.0 行為均已驗證。 本篇處理納管帳戶，不是平台使用者登入密碼原則。
 
 ## 前置條件
 
@@ -14,7 +14,23 @@
 
 ## 操作步驟
 
-1. 在 `Asset Management > Profiles > View Password Profile Components > Account Password Rules` 新增專用規則，設定長度與必要字元類型，排除目標不接受的字元。
+### 密碼規則與設定檔的關係
+
+實際入口是 `資產管理 > 設定檔 > 檢視密碼設定檔元件`。元件畫面分成「檢查密碼」、「變更密碼」、「帳戶密碼規則」與「密碼同步群組」。設定檔再將檢查排程、變更排程與密碼規則組合，指派給帳戶。
+
+進入「帳戶密碼規則」，選取規則後按鉛筆，切到「密碼規則」。先閱讀上方「此帳戶密碼規則與設定檔相關聯」提示，再決定是否另建專用規則。
+
+![密碼規則欄位與共用影響提示](../../images/sop/spp-password-rules.jpg)
+
+圖 1：既有 Macrocosm Password Rule 顯示 6–10 字元及不允許符號，僅記錄現況，不是建議的正式密碼強度。未儲存異動。
+
+現場規則的長度、必要字元數與排除字元都要按目標限制重新設計。變更共用規則前，從「密碼設定檔」分頁追查引用關係，再從帳戶「管理」確認是否繼承。只改規則，不會證明目標已接受新的密碼。
+
+本次「檢查密碼」元件的既有排程顯示「永不」。這是現況，不應將新增帳戶視為已安排定期檢查。
+
+### 實施與驗收
+
+1. 在 `資產管理 > 設定檔 > 檢視密碼設定檔元件 > 帳戶密碼規則` 新增專用規則，設定長度與必要字元類型，排除目標不接受的字元。
 2. 在同一元件管理頁建立 Check Password 與 Change Password 設定。首次測試不要安排尚未核准的自動變更時段。
 3. 到 `Asset Management > Profiles > Password Profiles` 建立 `Pilot-Password-Profile`，分別選取檢查、變更與帳戶密碼規則，儲存。
 4. 僅將一個測試帳戶明確指派至該設定檔，確認有效設定沒有誤用到整台資產或整個分割區。
@@ -29,6 +45,7 @@ SPP 可產生的長度不代表目標能完整接收；部分平台可能截斷�
 
 ## 相關文件
 
+- [實機截圖與驗證範圍](environment-evidence.md)
 - [官方：SPP 8.0 LTS，Account Password Rules](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/administration-guide/81)
 - [官方：Password Profile 繼承](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/administration-guide/66)
 - [官方：建立 Password Profile](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/administration-guide/79)
