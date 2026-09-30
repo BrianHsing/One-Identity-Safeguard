@@ -10,6 +10,8 @@
 
 官方來源分開標示：各篇原理與部分部署步驟保留已查證的 8.0 LTS 官方文件。本次 SPS 9.0 介面提供的官方說明連結實際開啟為 404，未據此宣稱 9.0 文件已查證。UI 名稱、選項與既有狀態則以本次實機觀察為準；本文件不是版本相容性認證。
 
+另補拍本機既有 SCALUS 設定頁，執行檔版本 1.1.0.470 來自本機檔案中繼資料，並已確認設定中的 mstsc.exe 與 putty.exe 路徑存在；這不是官方版本相容性聲明。SCALUS 檢視後按 Cancel，沒有儲存或變更協定設定。
+
 ## 前置條件
 
 使用經授權的管理帳戶，拍攝時避開密碼、Token、SAML metadata、通知信箱與個人帳戶清單。圖片保留必要的實驗室資產名稱與部分私有 IP，對外提供前仍須依客戶要求去識別。
@@ -32,7 +34,8 @@
 | [清理](sps-audit-cleanup.md) | 原則清單及保留分布 | 任何刪除作業 |
 | [內容原則](sps-content-policy.md) | 事件、動作與 Drawing 通道 | 實際通知、中止與負向測試 |
 | [RemoteApp](remoteapp-integration.md) | SPP 類型入口、SPS 通道現況 | RDS／Launcher 安裝、授權與程式啟動 |
-| [SCALUS](scalus-install.md)／[Desktop Player](desktop-player-install.md) | 尚無本機安裝截圖 | 安裝、協定關聯與播放 |
+| [SCALUS](scalus-install.md) | 本機協定總覽、RDP 執行路徑與範本、PuTTY 設定，共 4 張截圖 | 重新安裝、Windows 協定關聯與 RDP／SSH 啟動驗收 |
+| [Desktop Player](desktop-player-install.md) | 尚無本機安裝截圖 | 安裝與播放 |
 
 ### 現況與建議值不可混用
 
