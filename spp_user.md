@@ -2,7 +2,7 @@
 
 1. **開啟 SPP 使用介面**
   - 開啟瀏覽器，輸入 `https://10.16.10.90` 以開啟 SPP 使用介面。
-  - 使用預設帳號及密碼登入：`admin / Admin123`。
+  - 使用已授權的個人管理帳號登入；首次初始化帳戶不作日常管理用途。
   ![GITHUB](/images/spp/spp_web/1.png "SPP 使用介面")
 
 2. **進入使用者管理**
@@ -14,9 +14,9 @@
   ![GITHUB](/images/spp/spp_user/2.png "新增使用者")
   - 在使用者名稱輸入 `sgadmin`，時區選擇 `(UTC+08:00) Taipei`，點選按鈕 `下一步`。
  ![GITHUB](/images/spp/spp_user/3.png "使用者名稱")
-  - 在密碼欄位輸入密碼 `1qaz@WSX`，並且勾選 `密碼永不過期`。
+  - 在密碼欄位輸入客戶核准的初始密碼 `<CUSTOMER_INITIAL_PASSWORD>`，依客戶原則設定密碼期限。
   ![GITHUB](/images/spp/spp_user/4.png "輸入密碼")
-  - 由於這個帳號是管理者，點選上方頁籤 `權限`，點選 `全選`，完成後點選按鈕 `確定`。
+  - 點選 `權限`，依[管理者角色索引](sgadmin.md)指派必要角色，完成後點選 `確定`。下方截圖為既有示範，正式環境不要直接全選。
   ![GITHUB](/images/spp/spp_user/5.png "帳號是管理者")
   - 完成後就可以看到建立好的使用者，完成後右上角點選 `X` 關閉即可。
   ![GITHUB](/images/spp/spp_user/6.png "建立好的使用者")
@@ -25,7 +25,7 @@
   - 點選右邊資訊中的 `＋`，新增使用者。
   - 在使用者名稱輸入 `u01`，時區選擇 `(UTC+08:00) Taipei`，點選按鈕 `下一步`。
   ![GITHUB](/images/spp/spp_user/7.png "新增使用者")
-  - 在密碼欄位輸入密碼 `1qaz@WSX`，並且勾選 `密碼永不過期`，完成後點選按鈕 `確定`。
+  - 在密碼欄位輸入客戶核准的初始密碼 `<CUSTOMER_INITIAL_PASSWORD>`，依客戶原則設定密碼期限，完成後點選按鈕 `確定`。
   ![GITHUB](/images/spp/spp_user/8.png "輸入密碼")
   - 完成後就可以看到建立好的使用者，完成後右上角點選 `X` 關閉即可。
   ![GITHUB](/images/spp/spp_user/9.png "建立好的使用者")
