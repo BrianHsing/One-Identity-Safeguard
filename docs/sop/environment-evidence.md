@@ -33,7 +33,7 @@
 | [SPS 備份封存](sps-backup-archive.md) | 系統備份、封存門檻與連線指派 | 目的地檔案、封存、回放與還原 |
 | [清理](sps-audit-cleanup.md) | 原則清單及保留分布 | 任何刪除作業 |
 | [內容原則](sps-content-policy.md) | 事件、動作與 Drawing 通道 | 實際通知、中止與負向測試 |
-| [RemoteApp](remoteapp-integration.md) | SPP 類型／主機／別名未儲存表單、SPS Drawing 與 rail 通道新圖；另引用使用者提供的 Publisher 與模組圖 | RDS／Launcher 安裝、授權與程式啟動 |
+| [RemoteApp](remoteapp-integration.md) | SPP 已填入目錄帳戶 sg_svc／主機 App／ApexOne 別名的未儲存表單、SPS Drawing 與 rail 通道新圖；另引用使用者提供的 Publisher 與模組圖 | RDS／Launcher 安裝、授權與程式啟動 |
 | [SCALUS](scalus-install.md) | 本機協定總覽、RDP 執行路徑與範本、PuTTY 設定，共 4 張截圖 | 重新安裝、Windows 協定關聯與 RDP／SSH 啟動驗收 |
 | [Desktop Player](desktop-player-install.md) | 尚無本機安裝截圖 | 安裝與播放 |
 
