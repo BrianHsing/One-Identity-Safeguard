@@ -36,7 +36,7 @@ ZIP 中附帶的 `chromedriver.exe.sha256` 仍為 NUPKG 的雜湊，與 ZIP 實�
 
 ## 發佈主機準備
 
-以 Windows PowerShell 7 x64 為網頁腳本的目標環境；先確認 RDS／RemoteApp、SPP／SPS 與應用程式啟動整合已依客戶設計完成。實際發佈及整合參考 [RemoteApp SOP](../sop/remoteapp-integration.md)。
+以 PowerShell 7 x64 為網頁腳本的目標環境；先確認 RDS／RemoteApp、SPP／SPS 與應用程式啟動整合已依客戶設計完成。實際發佈及整合參考 [RemoteApp SOP](../sop/remoteapp-integration.md)。
 
 將經核准的 PowerShell 與 Chrome Dev 安裝於發佈主機，再將模組放到所有執行帳戶可讀取、PowerShell 可探索的位置。原圖使用 `C:\Program Files\PowerShell\7\Modules\selenium`；這是現場位置，不是唯一安裝路徑。
 

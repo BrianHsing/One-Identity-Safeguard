@@ -33,7 +33,7 @@
 | [SPS 備份封存](sps-backup-archive.md) | 系統備份、封存門檻與連線指派 | 目的地檔案、封存、回放與還原 |
 | [清理](sps-audit-cleanup.md) | 原則清單及保留分布 | 任何刪除作業 |
 | [內容原則](sps-content-policy.md) | 事件、動作與 Drawing 通道 | 實際通知、中止與負向測試 |
-| [RemoteApp](remoteapp-integration.md) | SPP 類型入口、SPS 通道現況 | RDS／Launcher 安裝、授權與程式啟動 |
+| [RemoteApp](remoteapp-integration.md) | SPP 類型／主機／別名未儲存表單、SPS Drawing 與 rail 通道新圖；另引用使用者提供的 Publisher 與模組圖 | RDS／Launcher 安裝、授權與程式啟動 |
 | [SCALUS](scalus-install.md) | 本機協定總覽、RDP 執行路徑與範本、PuTTY 設定，共 4 張截圖 | 重新安裝、Windows 協定關聯與 RDP／SSH 啟動驗收 |
 | [Desktop Player](desktop-player-install.md) | 尚無本機安裝截圖 | 安裝與播放 |
 
@@ -56,7 +56,7 @@
 
 ## 注意事項
 
-本次僅檢視、搜尋、展開既有設定與開啟未儲存表單。資產驗證類型示範已取消；沒有建立帳戶或提供者、沒有儲存原則或 Commit、沒有變更密碼、沒有執行備份還原、封存、清理或中止連線。
+本次僅檢視、搜尋、展開既有設定與開啟未儲存表單。資產驗證類型示範已取消；沒有建立帳戶或提供者、RemoteApp 類型示範已捨棄，沒有儲存原則或 Commit、沒有變更密碼、沒有執行備份還原、封存、清理或中止連線。
 
 圖片中警告、空白值與既有勾選刻意保留，並在相鄰文字說明，避免把不完整的現況包裝成完成範例。EX2016 是既有資產標籤，不是部署版本建議。
 
