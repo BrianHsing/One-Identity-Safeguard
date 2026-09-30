@@ -42,6 +42,8 @@ RemoteApp 發佈本身不是完整的應用程式隔離。本專案建議限制 
 
 ## 相關文件
 
+- [客製化 Selenium 代登與來源腳本](../kb/custom-app-login-selenium.md)
+
 - [實機截圖與驗證範圍](environment-evidence.md)
 - [官方：SPP 8.0 LTS，Remote Desktop Application](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/user-guide/11)
 - [Microsoft Learn：RDS CAL](https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/rds-client-access-license)

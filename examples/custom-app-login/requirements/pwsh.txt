@@ -1,0 +1,1 @@
+--cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args " -File C:\Script\sps.ps1 -username {username} -password {password} -asset {Target.AssetNetworkAddress}" --enable-debug

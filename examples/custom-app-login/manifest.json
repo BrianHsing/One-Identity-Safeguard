@@ -1,0 +1,144 @@
+{
+  "imported_on": "2026-09-30",
+  "scope": "User-supplied scripts, requirement files and publisher screenshot; not executed or installed.",
+  "files": [
+    {
+      "path": "examples/custom-app-login/scripts/ApexOne.ps1",
+      "kind": "original-script",
+      "bytes": 661,
+      "sha256": "259c5e6b75cbf01c57a73ee2a0758f3fdf55dc58050f1175fc032d2e4ba027ee"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/ArubaVC.ps1",
+      "kind": "original-script",
+      "bytes": 665,
+      "sha256": "2349aeb55bfcbc11ceddb2473a10d3391c197fb11b6fca290660c0453cc6e9cb"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/Dell.ps1",
+      "kind": "original-script",
+      "bytes": 859,
+      "sha256": "09beb373b5e09f10487b9311160846e45f75a57f7115f39b59153cbfcee464dc"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/DrIP.ps1",
+      "kind": "original-script",
+      "bytes": 644,
+      "sha256": "174b072d403ad9143583fa3ef84341f2a10eceb7d1ab0caec8cde70a39b4b36f"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/Fortigate.ps1",
+      "kind": "original-script",
+      "bytes": 663,
+      "sha256": "fd1cdb0fa95f1de729f5dbe24ba1a1e16272dcefeb948985ce7afec56a134701"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/FortigateSW.ps1",
+      "kind": "original-script",
+      "bytes": 674,
+      "sha256": "326540f28195beff3ee02c627ac86a1a78c801d5a467e2c9f8f8967b3443d50c"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/HPESW.ps1",
+      "kind": "original-script",
+      "bytes": 663,
+      "sha256": "769f67570c9ffd0c678ef45e7673168389b5d2041d6704edd6bf420cb54777fa"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/MSSQL.ps1",
+      "kind": "original-script",
+      "bytes": 17944,
+      "sha256": "f74f05b0b42504f9da330a7d8d8e47842a5abb92f4ba03536c9370669c14aba4"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/Nessus.ps1",
+      "kind": "original-script",
+      "bytes": 751,
+      "sha256": "09a5cf97f560c617c2d56739f53d6455d87c367f0566ec71f561381fcb5eb83c"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/Netapp.ps1",
+      "kind": "original-script",
+      "bytes": 739,
+      "sha256": "9557212d622d254ac3231c5bdb67a2f5ad9481a6dcb810f4b9de22f857df32ea"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/NReporter.ps1",
+      "kind": "original-script",
+      "bytes": 649,
+      "sha256": "0bc07300be330f8ff374d9558eb0c58dcbd1b3dbd33370d7d8b4c5d6ae3d974e"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/Paloalto.ps1",
+      "kind": "original-script",
+      "bytes": 639,
+      "sha256": "b44975ab83232584de4570ad4cbff816f7df548333006a9d845f58e2518ac898"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/Peplink.ps1",
+      "kind": "original-script",
+      "bytes": 617,
+      "sha256": "b1826fcc83a36f8d0ea7e8dc3030d793015ba8744f94414b5baf06e454b75d83"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/PVE.ps1",
+      "kind": "original-script",
+      "bytes": 932,
+      "sha256": "eab3199c4ef8d5d34edcd9b4a4b53cecb460eea57f4b27e9f16764939ad5c8e1"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/pve_auth1.ps1",
+      "kind": "original-script",
+      "bytes": 1828,
+      "sha256": "82ef647bc6d6d7816eb77eb22ba7cb82365ad61f29ab2cfdabedf627657b9f7e"
+    },
+    {
+      "path": "examples/custom-app-login/scripts/Synology.ps1",
+      "kind": "original-script",
+      "bytes": 804,
+      "sha256": "078aee8986067e7f21d3912428a1dfe3b0adc2faa830f514c256359101478993"
+    },
+    {
+      "path": "examples/custom-app-login/requirements/PowerShell-7.4.6-win-x64.msi",
+      "kind": "original-requirement",
+      "bytes": 109203456,
+      "sha256": "ed331a04679b83d4c013705282d1f3f8d8300485eb04c081f36e11eaf1148bd0"
+    },
+    {
+      "path": "examples/custom-app-login/requirements/pwsh.txt",
+      "kind": "original-requirement",
+      "bytes": 173,
+      "sha256": "b9846c7bb97c7b309b6fee941a7e58ea9da0e9ed6eb789ad425ba4bd71c4501a"
+    },
+    {
+      "path": "examples/custom-app-login/requirements/selenium.4.0.0-preview3.nupkg",
+      "kind": "original-requirement",
+      "bytes": 33542242,
+      "sha256": "42cc6a38a629d5d73cdce82a9a58d85567f5d384c00669eb756b729057932c91"
+    },
+    {
+      "path": "examples/custom-app-login/requirements/selenium.zip",
+      "kind": "original-requirement",
+      "bytes": 36994986,
+      "sha256": "99fd0f50cd40b82611183ff7764abe886c93def64e97462b64a5a92473433ddb"
+    },
+    {
+      "path": "examples/custom-app-login/requirements/更新driver.png",
+      "kind": "original-requirement",
+      "bytes": 134718,
+      "sha256": "ade0c8862fb68bac6229aed2ae032ae7aa406e4c18a425f60011e3be21ab1e75"
+    },
+    {
+      "path": "examples/custom-app-login/requirements/模組.png",
+      "kind": "original-requirement",
+      "bytes": 121957,
+      "sha256": "01e85bf8e1d5101f6ee73b1cfd0f8601d5e7e64edef7dc1944ebdad8d9b6cb67"
+    },
+    {
+      "path": "images/kb/custom-app-login/remote-application-publisher.png",
+      "kind": "original-screenshot",
+      "bytes": 92298,
+      "sha256": "642e724b8b47fad5853a72af976ffab42118a0cf4319bce97e5540472e7e1a75"
+    }
+  ]
+}

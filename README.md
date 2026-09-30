@@ -125,3 +125,5 @@ SPP 處理申請與核准，SPS 依連線及通道原則代理工作階段。是
 
 - [SPP 外部 Federation：AADSTS75011](docs/kb/spp-federation-aadsts75011.md)
 - [RDP 工作階段重新導向本機磁碟](docs/kb/safeguard-rdp-drive-redirection.md)
+
+- [客製化應用程式代登：RemoteApp／PowerShell Selenium](docs/kb/custom-app-login-selenium.md)（含 PS1、元件與 Git LFS 取得說明）
