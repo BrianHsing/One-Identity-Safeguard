@@ -14,6 +14,8 @@
 
 ## 操作步驟
 
+> RDP 指派截圖未包含完整原則名稱；文中 safeguard_rdp 名稱來自當時頁面檢視，不是裁切圖本身可辨識的欄位。
+
 ### 索引原則、語言與連線指派
 
 到 `Policies > Indexer Policies`，展開 `full_indexing`。畫面將 Commands、Window titles 與 Full screen contents 分開；要搜尋 RDP 畫面內文，須核對 Full screen contents，而不只 Window titles。
@@ -40,7 +42,7 @@
 
 圖 4：本次檢視服務正常，近 60 天 failed／lost 為 0，waiting 為 0。狀態正常不等於繁體中文字串辨識率已驗收。
 
-### 實施與驗收
+### 實施與驗收程序（尚未實跑）
 
 1. 到 `Basic Settings > Local Services > Indexer service` 確認索引服務啟用，依 CPU、記憶體與現有佇列設定平行處理量，儲存。
 2. 到 `Policies > Indexer Policies` 建立測試原則。要搜尋畫面內文時啟用 Full screen contents；lightweight_indexing 僅提供較精簡的命令／視窗標題索引，不足以取代完整畫面索引。

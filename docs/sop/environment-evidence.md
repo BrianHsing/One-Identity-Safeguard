@@ -62,6 +62,8 @@
 
 ## 相關文件
 
+- [整份文件審查與交付缺口](../documentation-review.md)
+
 - [專案操作目錄](../../README.md)
 - [SPP 8.0 LTS 官方管理指南](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0-lts/administration-guide)
 - [SPS 8.0 LTS 官方管理指南](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-sessions/8.0-lts/administration-guide)

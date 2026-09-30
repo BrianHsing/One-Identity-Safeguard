@@ -14,6 +14,8 @@
 
 ## 操作步驟
 
+> metadata 下載等未入鏡操作不由本圖證明；此圖只證明新增提供者表單，不能證明 Entra ID 整合成功。
+
 ### SPP 端的外部同盟入口
 
 到 `裝置管理 > Safeguard 存取 > 識別與驗證`，按 `＋ > 外部同盟`。「領域」對應 Realm；「從檔案」用於匯入 Entra ID XML，「從 URL」則需提供核准的中繼資料網址。
@@ -26,7 +28,7 @@
 
 現場已有名為 Microsoft Entra ID 的提供者；本次未登入 Entra 管理中心、未調整 claims 或條件式存取，也未測試 SAML 往返。以下 Entra 端步驟依官方 KB，需由租用戶管理者完成驗收。
 
-### 實施與驗收
+### 實施與驗收程序（尚未實跑）
 
 1. 在 SPP `Identity and Authentication` 新增 External Federation，Realm 使用測試使用者的登入尾碼，下載 SPP Federation Metadata。
 2. 在 Entra ID 建立非資源庫企業應用程式並設定 SAML 單一登入。Identifier 使用 SPP metadata 的 entityID；Reply URL 登錄實際使用的 `https://<CUSTOMER_SPP_FQDN>/RSTS/Login`。不要自行把 entityID 中的 http 改為 https。

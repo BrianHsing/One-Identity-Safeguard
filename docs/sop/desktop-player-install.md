@@ -6,7 +6,7 @@
 
 ## 適用範圍
 
-以下依 SPS 8.0 LTS 所附 Safeguard Desktop Player User Guide，示範 Windows 11。播放器套件版本另行記錄，不能直接視為 SPS 韌體版本。
+以下依 SPS 8.0 LTS 所附 Safeguard Desktop Player User Guide，整理 Windows 安裝程序；本次沒有本機安裝或播放截圖。播放器套件版本另行記錄，不能直接視為 SPS 韌體版本。
 
 ## 前置條件
 

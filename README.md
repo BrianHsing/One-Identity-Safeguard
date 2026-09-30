@@ -4,105 +4,56 @@
 
 > 範例 IP 與帳號僅供辨識操作流程。對外提供前須檢查既有圖片中的信箱、姓名、組織、授權資訊與環境識別資料並去識別；不要沿用範例密碼。
 
-One Identity 致力於提供帳號解決方案，在行業超過20年，全球有5000家以上的企業採用。One Identity 解決方案涵蓋 Identity Governance Administrator ( IGA ) 身分治理與管理、Privileged Access Management ( PAM ) 特權存取管理、Access Management ( AM ) 存取管理、2FA 雙因素驗證。<br>
+One Identity Safeguard for Privileged Passwords（SPP）用於管理特權帳戶、密碼與存取申請；Safeguard for Privileged Sessions（SPS）提供工作階段代理與稽核。本專案包含部署參考、管理程序與實機畫面。
 
-One Identity Safeguard 是一項整合方案，結合一個安全強固設計的密碼保險箱、連線管理、以及具備威脅偵測與分析能力的監控方案。它能夠安全的儲存、管理、記錄和分析特權存取。<br>
+## 架構與版本界線
 
-本篇主要會專注於 Privileged Access Management ( PAM ) 特權存取管理，提供 One Identity Safeguard for Privileged Passwords 與 One Identity Safeguard for Privileged Sessions 的安裝步驟。<br>
+SPP 處理申請與核准，SPS 依連線及通道原則代理工作階段。是否側錄取決於原則設定；阻止使用者直接連到目標主機，仍須以網路 ACL 與主機權限控管落實。
 
-## 架構說明
+舊部署圖涵蓋 SPP 7.0／8.0 與 SPS 8.0；本次補拍為 SPP 9.0.0.2807、SPS 9.0.0。不能將整份視為同一版本的安裝紀錄。完整審查結果見[整份文件審查](docs/documentation-review.md)。
 
-One Identity Safeguard for Privileged Passwords 簡稱為 SPP，One Identity Safeguard for Privileged Sessions 簡稱 SPS，One Identity Safeguard for privileged analytics 簡稱 SPA，SPA 會在 SPS 上的啟用，為了方便撰寫，會用簡稱代表。<br>
+![既有架構示意](/images/architecture.png)
 
-在部署環境中無論是 VMware 或是 Hyper-V，亦或是公有雲 Azure、AWS，都可以將 Safeguard 部署在您的基礎架構中。在地端虛擬化環境中 SPP 會是以 Virtual Appliance 的方式部署，符合 FIPS-140-2，分別會提供 OVA 與 VHD 匯入。SPS 提供 ISO 檔，您需要將虛擬機器先建立起來，規格給予 4 vCPU、32 GB RAM、500 GB - 4 TB Disk，作業系統類型需要選擇 Ubuntu 64 bit。建議您可以額外準備一個儲存空間，無論是 Windows FileShare 或是 NAS，用於存放SPP 與 SPS 的備份檔、錄影檔，定期的封存錄影檔，可以讓您不需要給予 SPS 太大的儲存空間。在身分驗證的選擇上，您可以使用 SPP Local 帳號或是整合現有的 AD、LDAP 等。當然如果您想要整合 2FA 驗證也是沒問題的，常見的像是 One Identity Defender、Azure MFA、全景、偉康等都能支援，以廣義的來說無論是透過 RADIUS 或是 SAML 都可以跟 Safeguard 整合。<br>
-
-完成部署後，使用者透過 SPP 提供的網頁服務申請連線，經由指定人員核准後，即可透過 SPS 登入到需要連線的伺服器，所有的過程都會被記錄下來，也可有效的阻隔使用者對伺服器的直接連線。
-
-![GITHUB](/images/architecture.png "architecture")<br>
+此圖保留為歷史架構示意；連接埠以目標版本官方文件為準，尤其 SPS 節點間 UDP 500／4500 不可解讀為 SPP 與 SPS 間通訊。
 
 ## 前置作業
 
-- One Identity 下載連結<br>
-  https://1drv.ms/f/s!AvZb8cMf7gfXhOhH1WXkYWzGFQBFUg<br>
+安裝映像與修補檔由 [One Identity 官方支援入口](https://support.oneidentity.com/) 取得，授權檔由授權窗口核發。確認目標版本的升級路徑、支援平台與授權條件，再安排安裝。
 
-- 系統導入所需要準備的資源如以下表格。<br>
+| 產品與版本 | 部署資源依據 | 容量界線 |
+|---|---|---|
+| SPP 8.0 LTS | 最少 4 vCPU、10 GB RAM、500 GB 磁碟 | 使用官方 VM 套件；不是一般 Windows VM 自行安裝 |
+| SPS 8.0 LTS | 至少 8 GiB RAM；固定大小磁碟 | 30 GiB 僅供評估；32 GiB RAM 是本專案規劃範例，正式資源依連線量、側錄量與保留期間估算 |
+| Defender／RDS | 選用整合元件 | 分別確認產品、Windows Server 與 RDS 授權及容量，不沿用示範規格作為最低需求 |
 
-  |虛擬機器|角色說明|規格|數量|備註|
-  |----|----|----|----|----|
-  |SPP|密碼模組|vCPU:4 core <br> RAM: 10 GB <br> Disk: 100 GB |1|提供OVA或是VHD|
-  |SPS|側錄模組|vCPU:4 core <br> RAM: 32 GB <br> Disk: 100 GB |1|提供ISO|
-  |Defender|2FA驗證|vCPU:4 core <br> RAM: 16 GB <br> Disk: 100 GB |1|需要準備 Windows Server，提供安裝檔<br> 有需要再準備|
-  |RDS|遠端應用程式發佈主機|vCPU:4 core <br> RAM: 16 GB <br> Disk: 100 GB |1|需要準備 Windows Server <br> 有需要再準備|
-- 防火牆開通資訊。以下為既有示範清單，並非完整通用矩陣；依實際版本、平台、TLS、叢集與備份方式收斂來源及目的地。NTP 使用 UDP 123，RADIUS 使用實際設定的 UDP 連接埠，SMTP 依郵件主機設定。參考 [SPP 8.0 LTS 官方連接埠](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/administration-guide/157) 與 [Defender 官方流向](https://support.oneidentity.com/defender/kb/4251282/detailed-directional-firewall-port-information-for-defender)。<br>
-  - SPP 到伺服器（僅開放核准的來源與目的地）。<br>
+依據：[SPP 8.0 部署要求](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/administration-guide/4)、[SPS 8.0 Hyper-V 要求](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-sessions/8.0%20lts/installation-guide/5)。部署 9.0 時須重新核對 9.0 要求，不能直接以此表簽核。
 
-  |目標角色|協定|開Port|備註|
-  |----|----|----|----|
-  |AD(DC)|TCP|135、389、445、636、3268、49152-65535|整合AD和納管AD用|
-  |Windows Server|TCP|135、445、49152~65535|納管用|
-  |DNS|TCP/UDP|53|名稱查詢|
-  |NTP|UDP|123|時間校時|
-  |Mail Relay|TCP|25|發通知信|
-  |Redhat|TCP|22|納管用|
-  |KMS|TCP|1688|作業系統授權認證|
-  |AIX|TCP|22|納管用|
-  |Defender|UDP|1812|RADIUS 驗證，依實際監聽設定|
+防火牆應列出確切來源、目的地、方向及用途。以下只涵蓋主要流向，不能代替完整開通單：
 
-  - SPS 到伺服器（僅開放核准的來源與目的地）。<br>
+| 流向 | 用途與連接埠 |
+|---|---|
+| 管理者／申請人 → SPP | HTTPS TCP 443 |
+| 管理者 → SPS | 管理介面 HTTPS TCP 443 |
+| SPS → SPP | 整合 HTTPS TCP 443 |
+| 所有 SPP 節點 ↔ 所有 SPS 節點 | TCP 8649，雙向 |
+| SPS 節點 ↔ SPS 節點 | 叢集通訊 UDP 500、4500 |
+| 使用者 → SPS → 目標主機 | 依 Connection Policy 設定 RDP／SSH 監聽與目的連接埠；預設服務常見 TCP 3389／22，不能忽略自訂值 |
+| SPP／SPS → 基礎服務及外部整合 | DNS、NTP、SMTP、AD、備份、RADIUS 等依實際整合逐項查證與開通 |
 
-  |目標角色|協定|開Port|備註|
-  |----|----|----|----|
-  |Windows Server|TCP|3389|連線代登用|
-  |Linux|TCP|22|連線代登用|
-  |AIX|TCP|22|SSH 連線代登用|
-  |DNS|TCP/UDP|53|名稱查詢|
-  |NTP|UDP|123|時間校時|
-  |Mail Relay|TCP|25 或實際 SMTP 連接埠|發通知信|
-
-  - RDS 到伺服器（僅開放核准的來源與目的地）。<br>
-
-  |目標角色|協定|開Port|備註|
-  |----|----|----|----|
-  |AD|TCP|88、135、139、389、445、49152~65535|加入AD用|
-  |DNS|TCP/UDP|53|連線代豋用|
-  |NTP|UDP|123|連線代豋用|
-  |根據AP協定的Port而定義|TCP|依據實際Port定義|AP主機代登入用|
-
-  - Defender 到伺服器（僅開放核准的來源與目的地）。<br>
-
-  |目標角色|協定|開Port|備註|
-  |----|----|----|----|
-  |AD|TCP|389、636、3268|加入AD用|
-
-- 客戶端 ----> 特權系統。<br>
-  - 管理者<br>
-
-  |目標角色|協定|開Port|備註|
-  |----|----|----|----|
-  |SPP|TCP|443|管理和申請登入用|
-  |SPS|TCP|443、22、3389|代豋連線用|
-  |備份主機|TCP|3389|管理用|
-  |RDS|TCP|3389|管理用|
-
-  - 一般使用者<br>
-
-  |目標角色|協定|開Port|備註|
-  |----|----|----|----|
-  |SPP|TCP|443|申請登入用|
-  |SPS|TCP|443、22、3389|代豋連線用|
+[官方 SPP／SPS 整合流向](https://support.oneidentity.com/zh-cn/technical-documents/one-identity-safeguard-for-privileged-sessions/8.0%20lts/administration-guide/120)；[SPP 8.0 連接埠清單](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/administration-guide/157)。
 
 ## Safeguard 部署
 
 - SPP 部署步驟
   - 確認擁有 SPP 的匯入檔<br>
-    - Hyper-V 為 Safeguard.vhdx<br>
+    - Hyper-V 使用官方 ZIP 完整解壓縮內容，包含 VM 組態與 VHDX<br>
     - VMware 爲 Safeguard-vmware-prod-x.x.x.x.ova<br>
   - [Privileged Passwords 密碼模組匯入](/spp.md)<br>
   - [使用 Console 初始 SPP 設定](/spp_init.md)<br>
   - [使用瀏覽器登入 SPP 進行初始設定](/spp_web.md)<br>
 - SPS 部署步驟
-  - 建立 vCPU:4 core/RAM: 32 GB/Disk: 100 GB 的虛擬機器<br>
-  - 掛載 SPS ISO 檔，此檔案可以 https://1drv.ms/f/s!AvZb8cMf7gfXhOhH1WXkYWzGFQBFUg 下載，路徑為 One Identity Safeguard > SPS > 8<br>
+  - 依目標版本與容量規劃建立虛擬機器，磁碟採固定大小<br>
+  - 掛載由官方支援入口取得的 SPS ISO<br>
   - [Privileged Sessions 側錄模組安裝](/sps.md)<br>
   - [使用 Console 初始 SPS 設定](/sps_init.md)<br>
   - [使用瀏覽器登入 SPS 初始設定](/sps_web.md)<br>

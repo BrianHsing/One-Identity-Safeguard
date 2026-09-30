@@ -26,7 +26,7 @@
 
 現場 RDP 連線尚未指派 Backup policy／Archive policy，不能因有清理原則就認為已完成備份。必須先完成保存與回放驗收，再按已核准期限提交清理設定。
 
-### 實施與驗收
+### 實施與驗收程序（尚未實跑）
 
 1. 記錄原則名稱、適用連線原則、保存天數與應排除的工作階段。先用搜尋確認查詢的實際命中範圍並抽樣回放。
 2. 到 `Policies > Audit Data Cleanup Policies` 選擇 `Add policy`。

@@ -34,7 +34,7 @@
 
 在核准的連線原則分別選取 Backup policy／Archive policy 後按 Commit，再驗證實際工作、目的地檔案及回放。檢查系統組態與連線側錄兩條保存路徑，不能只做其中之一。本次沒有 Commit、沒有 Backup／Archive／Restore 作業，也未讀取備份內容。
 
-### 實施與驗收
+### 實施與驗收程序（尚未實跑）
 
 1. 在 `Policies > Backup & Archive > Backup policies` 建立系統備份原則，設定目的地、驗證與排程。
 2. 到 `Basic Settings > Management > System backup` 指派該原則並啟用 Encrypt configuration，依官方程序使用 GPG 保護組態；私密金鑰離機保存。

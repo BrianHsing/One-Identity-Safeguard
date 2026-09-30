@@ -22,7 +22,7 @@
 
 圖 1：既有 MSTSC 原則，選擇視窗標題偵測與中止連線；含中文比對字串，尚未證明偵測有效，不是推薦範本。
 
-比對欄位每列是一個字串或表示式。不要把 `Window，安全性` 當成兩筆獨立條件：本次只看到同一列文字。中文即時監控的支援限制應另查當版文件，不能以 OCR 可辨識繁體中文推論即時阻擋也支援。
+比對欄位每列是一個字串或表示式。不要把 同一列中的 Window 與安全性 當成兩筆獨立條件：本次只看到同一列文字。中文即時監控的支援限制應另查當版文件，不能以 OCR 可辨識繁體中文推論即時阻擋也支援。
 
 再到 `Traffic Controls > RDP > Channel Policies`，開啟 Connection 使用的通道原則，在 Drawing 項目查看 Content policy。
 
@@ -32,13 +32,13 @@
 
 先在專用測試通道選取測試 Content policy，確認 Connection 引用該 Channel policy，再提交與測試。本次未指派、未中止任何工作階段；既有 MSTSC 原則不能作為阻擋驗收證據。
 
-### 實施與驗收
+### 實施與驗收程序（尚未實跑）
 
 1. 到 `Policies > Content Policies` 新增 `Pilot-Content-Alert`。
 2. SSH 測試選擇 Full screen content，Match 輸入 `PAM_CONTENT_TEST`。有排除需求時再設定 Ignore，避免寬鬆的排除式抵銷偵測。
 3. 第一輪只啟用記錄事件及必要通知，先不啟用中止連線；儲存原則。
 4. 在測試 Channel Policy 選取這個 Content Policy，確認測試 Connection Policy 引用該 Channel Policy，提交變更。
-5. 透過 SPS 建立 SSH 工作階段，在 shell 執行 `printf '%s\n' 'PAM_CONTENT_TEST'`，核對事件與通知。再執行沒有測試字串的命令，確認未誤報。
+5. 先建立不含測試字串的獨立 SSH 工作階段做負向測試，確認未誤報，再開另一個新工作階段執行 `printf '%s\n' 'PAM_CONTENT_TEST'`，核對事件與通知。Full screen content 也可能比對輸入的命令本身，這僅驗證畫面文字偵測，不證明命令執行語意；不要在仍留有測試字串的畫面驗證負向案例。
 6. 若需求是阻擋，在隔離測試原則啟用中止連線並重測。正式導入前，由應用負責人確認誤判影響與連線中止後的交易處理。
 
 ## 注意事項

@@ -32,16 +32,16 @@ sgadmin 已獲授 Security Policy Administrator 權限；u01、a01 與[納管帳
 
 特別檢查「要求者」分頁的緊急存取設定。現場 Demo 允許緊急存取且勾選忽略時間限制，不能拿這筆既有原則證明「任何情況都必須先核准」。正式測試須使用符合核准制度的專用原則，另測緊急例外；本次未改動這些選項。
 
-### 實施與驗收
+### 實施與驗收程序（尚未實跑）
 
 1. 開啟 `安全性原則管理 > 權利`，新增 `Demo-Remote-Access`。
 2. 在該權利的「使用者」 加入 u01。a01 作為核准人，不因核准需求而加入申請人清單。
-3. 在「存取要求原則」 新增 `Demo-Windows-RDP`，Access Type 選擇 RDP。在 Scope 僅加入 WinSrv 的 LoginUser 及本次需要的目標範圍。
+3. 在「存取要求原則」 新增 `Demo-Windows-RDP`，「一般」選擇「工作階段」，類型選 RDP。在 Scope 僅加入 WinSrv 的 LoginUser 及本次需要的目標範圍。
 4. 設定工作階段使用的 SPS 連線設定，與 SPS 上已驗證的連線原則對應。
 5. Web 介面的流程設定分成 Requester、Approver、Reviewer。Requester 設定申請理由及存取期限；本專案測試建議為 1 小時，這是示範值，不是產品預設。
 6. Approver 選擇 `Approvals Required`，Qty 設為 1，核准人加入 a01，不使用 Auto-Approved。若啟用事後覆核，另指定實際覆核人。
-7. 儲存後建立 `Demo-Linux-SSH`，Access Type 選 SSH，Scope 僅加入 ubuntu 的 loginuser；套用同樣的申請與核准流程。
-8. 用 u01 測試：核准前不可啟動、a01 核准後可啟動。再用未獲授此權利的測試使用者確認看不到該申請範圍。
+7. 儲存後建立 `Demo-Linux-SSH`，「一般」選擇「工作階段」，類型選 SSH，Scope 僅加入 ubuntu 的 loginuser；套用同樣的申請與核准流程。
+8. 使用未開放緊急存取的專用測試原則，用 u01 測試：核准前不可啟動、a01 核准後可啟動。再用未獲授此權利的測試使用者確認看不到該申請範圍。
 9. 登出目標並歸還申請後，核對申請歷程與 SPS 側錄，確認實際目標、登入帳戶和操作人一致。
 
 ## 注意事項

@@ -14,6 +14,8 @@ Appliance Administrator 與 User Administrator 分工完成提供者及使用者
 
 ## 操作步驟
 
+> 截圖只呈現表單可見區域；Connection、網域或 SSL 等未入鏡欄位不能僅憑本圖確認。外部 AD 連線與登入尚未驗收。
+
 ### AD 提供者的欄位對照
 
 進入 `裝置管理 > Safeguard 存取 > 識別與驗證`，按 `＋` 下拉選單，選 `Active Directory`。
@@ -34,7 +36,7 @@ Appliance Administrator 與 User Administrator 分工完成提供者及使用者
 
 下半部的「連線」、「可用於識別與驗證的網域」及 SSL 選項須向下查看。現場已有 AD 提供者，但本次未測試登入或修改它。
 
-### 實施與驗收
+### 實施與驗收程序（尚未實跑）
 
 1. 保留已驗證可登入的本機管理員，記錄網域 FQDN、服務帳戶、憑證信任與允許匯入的測試使用者。
 2. 到 `Appliance Management > Safeguard Access > Identity and Authentication` 新增 Active Directory 提供者，輸入目錄連線資料與服務帳戶憑證。

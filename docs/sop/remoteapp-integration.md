@@ -14,6 +14,8 @@ Windows Server RDS 已能發佈測試 RemoteApp，應用程式在工作階段主
 
 ## 操作步驟
 
+> 本篇畫面只展示相關設定入口與通道現況，沒有 RemoteApp 程式啟動結果，不能作為整合成功證據。
+
 ### SPP 工作階段類型的實際位置
 
 在 `安全性原則管理 > 權利 > 存取要求原則 > 一般` 選「工作階段」後，可以看到「RDP 應用程式」。應另建專用原則，不把既有一般 RDP 原則直接改成正式 RemoteApp。
@@ -24,7 +26,7 @@ Windows Server RDS 已能發佈測試 RemoteApp，應用程式在工作階段主
 
 本次已在 SPS `Traffic Controls > RDP > Channel Policies > safeguard_default` 看到 Dynamic virtual channel，以及 Custom 的 rail、rail_ri、rail_wi。這只證明通道設定存在；尚未登入 RDS 主機核對 Launcher、發佈 Alias、授權與實際啟動。因此以下仍是整合驗收程序，不能宣稱 RemoteApp 已可用。
 
-### 實施與驗收
+### 實施與驗收程序（尚未實跑）
 
 1. 架構採「使用者申請 SPP → 核准 → SPS 代理 RDP → RDS 工作階段主機啟動工具 → 目標應用程式」。記錄每一段的來源、目的地、登入帳戶及負責人。
 2. 依 SPS 本版指南安裝、設定 RemoteApp Launcher，透過 RDS 發佈 `OISGRemoteAppLauncher`，記錄 Program Name、Alias 與核准的應用程式命令列。
