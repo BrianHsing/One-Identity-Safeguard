@@ -1,0 +1,120 @@
+[
+  {
+    "file": "azure-saml-settings.png",
+    "source": "使用者提供截圖",
+    "crop": [
+      285,
+      205,
+      1040,
+      575
+    ],
+    "redaction_rectangles": [
+      [
+        612,
+        262,
+        990,
+        296
+      ]
+    ],
+    "sha256": "0b245973259d5f04fe0ef2a326ce3bcb0061be70bba302949feb9dacf4c0ddb7"
+  },
+  {
+    "file": "azure-saml-certificate.png",
+    "source": "使用者提供截圖",
+    "crop": [
+      320,
+      582,
+      1040,
+      821
+    ],
+    "redaction_rectangles": [
+      [
+        613,
+        671,
+        999,
+        690
+      ],
+      [
+        613,
+        706,
+        965,
+        725
+      ],
+      [
+        618,
+        727,
+        927,
+        747
+      ]
+    ],
+    "sha256": "552ae1a7fde84a8cebc13954310330d746b04c3ce45540708fb884efc27f88a2"
+  },
+  {
+    "file": "spp-federation-config.png",
+    "source": "使用者提供截圖",
+    "crop": [
+      105,
+      15,
+      775,
+      865
+    ],
+    "redaction_rectangles": [
+      [
+        143,
+        298,
+        385,
+        323
+      ],
+      [
+        145,
+        543,
+        730,
+        568
+      ]
+    ],
+    "sha256": "9e5568ef7d467cb4cf3a7247d6dddbfce3d969cea57e4cc7309ce30b84d05770"
+  },
+  {
+    "file": "spp-user-authentication.png",
+    "source": "使用者提供截圖",
+    "crop": [
+      110,
+      185,
+      1120,
+      558
+    ],
+    "redaction_rectangles": [
+      [
+        130,
+        386,
+        470,
+        409
+      ]
+    ],
+    "sha256": "5fc0e14b3defef00479146dd48d7bde7d4be8d70cd7cf8ea51506bb76fb43309"
+  },
+  {
+    "file": "azure-assignment-required.png",
+    "source": "2026-10-01 Azure Portal 實機補拍",
+    "crop": [
+      278,
+      492,
+      1000,
+      609
+    ],
+    "redaction_rectangles": [],
+    "sha256": "77dbf01c58b10db9037dfa51d50f38f1124ca4525e7ec982fe6bdacc90693afa"
+  },
+  {
+    "file": "azure-user-assignment.png",
+    "source": "2026-10-01 Azure Portal 實機補拍",
+    "crop": [
+      275,
+      305,
+      1020,
+      405
+    ],
+    "redaction_rectangles": [],
+    "sha256": "b391bc60b794e0660749814f96a97b97410e2eda7cb4dfc10e96a948a92e461b"
+  }
+]

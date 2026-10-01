@@ -28,7 +28,8 @@
 | [密碼原則](spp-password-policy.md) | 規則摘要、共用提示與繼承 | 新規則套用及排程執行 |
 | [權利](spp-entitlements.md) | 工作階段類型、需要核准與人數 | 範圍授權、緊急例外及負向測試 |
 | [SPP 備份](spp-backup.md) | 既有自動備份完成清單 | 離機副本、解密與隔離還原 |
-| [AD](spp-active-directory.md)／[Entra ID](spp-entra-id.md)／[Defender](defender-integration.md) | SPP 新增提供者空白表單 | 外部系統設定與登入往返 |
+| [AD](spp-active-directory.md)／[Defender](defender-integration.md) | SPP 新增提供者空白表單 | 外部系統設定與登入往返 |
+| [Entra ID](spp-entra-id.md) | 使用者提供的 SAML、憑證、SPP 同盟及使用者設定，加上 2026-10-01 Azure 需要指派與空指派清單，共 6 張去識別實圖 | 一般使用者指派完成、claim 實值及 SAML 登入往返；本次唯讀，未修改設定 |
 | [OCR](sps-ocr.md) | full_indexing、語言、RDP 指派、Indexer Status | 新側錄的中文與英文搜尋命中率 |
 | [SPS 備份封存](sps-backup-archive.md) | 系統備份、封存門檻與連線指派 | 目的地檔案、封存、回放與還原 |
 | [清理](sps-audit-cleanup.md) | 原則清單及保留分布 | 任何刪除作業 |
@@ -67,3 +68,5 @@
 - [專案操作目錄](../../README.md)
 - [SPP 8.0 LTS 官方管理指南](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0-lts/administration-guide)
 - [SPS 8.0 LTS 官方管理指南](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-sessions/8.0-lts/administration-guide)
+
+Entra ID 原先的 [空白提供者欄位圖](../../images/sop/spp-federation.jpg) 保留作為歷史介面參考；目前 SOP 已改用使用者提供的實際設定圖。
