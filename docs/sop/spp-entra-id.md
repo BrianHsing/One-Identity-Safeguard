@@ -6,9 +6,9 @@
 
 ## 適用範圍
 
-本文以使用者提供的 SPP 與 Azure Portal 設定截圖為主要案例，搭配 2026-10-01 在同一 Azure Portal 的唯讀補拍。SPP 介面版本先前核對為 9.0.0.2807；這次沒有修改同盟、宣告、指派或帳戶，也沒有執行端到端登入驗收。圖中的 10.16.10.110 是案例設備，客戶施工須換成核准的正式登入位址。
+本文適用於 SPP 9.0，示範介面版本為 9.0.0.2807。圖中的 10.16.10.110 是範例設備位址，部署時請換成客戶核准的正式登入位址。
 
-六張實際截圖均保留設定內容，只裁切無關區域並以程式遮蔽信箱、Realm、識別碼與憑證指紋等環境資訊；深色區塊表示已遮蔽，並非空白設定。未引用第三方文章的畫面。
+圖中深色區塊為已遮蔽的環境識別資訊，並非空白設定。
 
 原廠 KB 與 8.0 LTS 指南用於設定及欄位參考，不代表已驗證 9.0 全部行為。實施時以目標設備 metadata、實際 SAML 要求及相符版本文件核對。本文不涵蓋 SPS 管理介面的 SAML 整合或自動佈建使用者。
 
@@ -63,7 +63,7 @@ SPP Appliance Administrator 負責提供者設定，使用者與權利由具相�
 
 ![Azure Portal 基本 SAML 與宣告設定](../../images/sop/entra/azure-saml-settings.png)
 
-圖 1：使用者提供的 Azure Portal 設定。Reply URL 為 `/RSTS/Login`，Identifier 已遮蔽，保留五個宣告的對應。本案例登出 URL 也填 `/RSTS/Login`，但此圖不證明 SAML Single Logout 已正常運作，不將它列為客戶必填值。
+圖 1：Azure Portal 的基本 SAML 設定與宣告。Reply URL 為 `/RSTS/Login`，Identifier 已遮蔽，保留五個宣告的對應。本案例登出 URL 也填 `/RSTS/Login`，但此圖不證明 SAML Single Logout 已正常運作，不將它列為客戶必填值。
 
 #### 屬性與宣告
 
@@ -87,29 +87,29 @@ KB 4360719 另提供「只保留 NameID、移除 Additional Claims」的做法�
 
 ![Azure 需要指派設定](../../images/sop/entra/azure-assignment-required.png)
 
-圖 2：Azure Portal 唯讀補拍，「需要指派」與「是否要向使用者顯示」均為「是」。
+圖 2：企業應用程式屬性中，「需要指派」與「是否要向使用者顯示」均為「是」。
 
 ![Azure 現有指派清單](../../images/sop/entra/azure-user-assignment.png)
 
-圖 3：同次補拍顯示「找不到任何應用程式指派」。這是目前狀態，不是一般使用者已完成授權的證據。Global Administrator 可不受此指派要求限制，因此不能用管理員登入結果替代一般帳戶驗收。
+圖 3：使用者與群組頁面顯示「找不到任何應用程式指派」。請先指派測試使用者，再進行登入驗收。Global Administrator 可不受此指派要求限制，因此不能用管理員登入結果替代一般帳戶驗收。
 
 回到 SAML 頁面，在「SAML 憑證」下載「同盟中繼資料 XML」，記錄簽署憑證到期日。將檔案標示為 Entra ID 端，避免與 SPP XML 傳反。
 
 ![Azure SAML 憑證與 metadata 下載](../../images/sop/entra/azure-saml-certificate.png)
 
-圖 4：使用者提供的 SAML 憑證區塊，狀態為作用中，到期日為 2026/12/7，可由「同盟中繼資料 XML」下載。通知信箱、指紋與 metadata URL 已遮蔽；到期日只屬於本案例。
+圖 4：SAML 憑證設定，狀態為作用中，到期日為 2026/12/7，可由「同盟中繼資料 XML」下載。通知信箱、指紋與 metadata URL 已遮蔽；到期日只屬於本案例。
 
 ### 第三階段 完成 SPP 外部同盟
 
-回到第一階段表單，選「從檔案」，按「瀏覽」匯入 Entra ID 企業應用程式的 XML。核對名稱、Realm 與檔案來源後儲存。既有案例顯示「將使用現有中繼資料，除非上傳新檔案」，表示沿用已匯入的內容，不需要為了拍圖再上傳。
+回到第一階段表單，選「從檔案」，按「瀏覽」匯入 Entra ID 企業應用程式的 XML。核對名稱、Realm 與檔案來源後儲存。既有案例顯示「將使用現有中繼資料，除非上傳新檔案」，表示沿用已匯入的內容，未更新 metadata 時不需重新上傳。
 
 本案例「應用程式 ID 覆寫」已填入一個 HTTPS 識別值，與圖 1 的 Entra Identifier 相同。這是 SAML 識別值，不是 Entra 應用程式 Client ID。沿用此設計時兩端須完全一致；新環境是否需要覆寫，依目標設備及 IdP 設計決定，不視為固定必填。
 
 ![SPP 既有外部同盟設定](../../images/sop/entra/spp-federation-config.png)
 
-圖 5：使用者提供的既有外部同盟設定。名稱為 Microsoft Entra ID，採「從檔案」，已設定應用程式 ID 覆寫，且勾選「需要使用者一律驗證」；Realm 與覆寫值已遮蔽。
+圖 5：SPP 外部同盟設定。名稱為 Microsoft Entra ID，採「從檔案」，已設定應用程式 ID 覆寫，且勾選「需要使用者一律驗證」；Realm 與覆寫值已遮蔽。
 
-「需要使用者一律驗證」屬於重新驗證行為，不是建立使用者或授權的替代操作。本案例已勾選；其他環境是否啟用按客戶需求決定，並在已有 Entra 工作階段時測試登入提示；不能把勾選此項當成每次 MFA 已生效。本次未實測 SPP 9.0 此選項與客戶條件式存取的組合行為。
+「需要使用者一律驗證」屬於重新驗證行為，不是建立使用者或授權的替代操作。本案例已勾選；其他環境是否啟用按客戶需求決定，並在已有 Entra 工作階段時測試登入提示；不能把勾選此項當成每次 MFA 已生效。啟用後，須一併驗證 SPP 9.0 與客戶條件式存取原則的組合行為。
 
 從檔案匯入時，SPP 保存靜態 metadata，後續簽署憑證輪替須安排更新。採 URL 時，確認所有節點連線與 TLS 信任，並驗證更新及各節點登入。不要直接編輯帶數位簽章的 XML。[原廠 metadata 維護說明](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/7.4.2/administration-guide/frequently-asked-questions/how-do-i-configure-external-federation-authentication/how-do-i-add-an-external-federation-provider-trust)
 
@@ -121,7 +121,7 @@ KB 4360719 另提供「只保留 NameID、移除 Additional Claims」的做法�
 
 ![SPP 使用者驗證提供者與登入名稱](../../images/sop/entra/spp-user-authentication.png)
 
-圖 6：使用者提供的「內容 > 驗證」頁面，驗證提供者為 Microsoft Entra ID，登入名稱已遮蔽。預設覆蓋連接含該環境的登入提供者 ID，不可直接複製為其他客戶的網址。
+圖 6：使用者的「內容 > 驗證」頁面，驗證提供者為 Microsoft Entra ID，登入名稱已遮蔽。預設覆蓋連接含該環境的登入提供者 ID，不可直接複製為其他客戶的網址。
 
 識別提供者描述資料來源，驗證提供者描述如何驗證，兩者用途不同。不要為單一登入建立重複使用者，也不要假設 Entra 指派後會自動佈建至 SPP。
 
@@ -182,7 +182,7 @@ AADSTS75011 的 IdP 變更不是每個環境的必要安裝步驟。另見 [KB 0
 
 ### 參考文章整合與差異
 
-本篇參考使用者提供的 [Safeguard Entra ID 外部同盟文章](https://zihshuo976.notion.site/Safeguard-Entra-ID-SAML-2-0-3226df2f41d38004afa6e97fb067730c)，採用分階段說明、交換 metadata、明確指派與使用者對應的流程概念，文字重新撰寫。
+流程參考 [Safeguard Entra ID 外部同盟文章](https://zihshuo976.notion.site/Safeguard-Entra-ID-SAML-2-0-3226df2f41d38004afa6e97fb067730c)；設定差異如下。
 
 | 參考文章做法 | 本文件調整 |
 |---|---|
@@ -202,4 +202,4 @@ AADSTS75011 的 IdP 變更不是每個環境的必要安裝步驟。另見 [KB 0
 - [AD 登入整合](spp-active-directory.md)
 - [權利設定](spp-entitlements.md)
 
-查核日期：2026-10-01。One Identity 舊支援站部分頁面轉址或拒絕讀取，本次可取得 KB 與官方索引內容，但未取得完整 9.0 同盟指南。版本差異保留為現場驗收項目。
+部分參考文件適用於較早版本；SPP 9.0 的介面差異與登入行為，請依本文驗收項目確認。
