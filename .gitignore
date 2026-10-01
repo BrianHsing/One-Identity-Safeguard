@@ -1,3 +1,6 @@
 
 # Original KB documents contain environment-specific connection information.
 /docs/kb/source-documents-local/
+
+# Customer deliverables remain local; only SOP sources are published.
+/docs/customer/

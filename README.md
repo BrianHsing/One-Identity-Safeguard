@@ -98,7 +98,6 @@ SPP 處理申請與核准，SPS 依連線及通道原則代理工作階段。是
 - [備份](docs/sop/spp-backup.md)<br>
 - [Active Directory 整合](docs/sop/spp-active-directory.md)<br>
 - [Microsoft Entra ID 整合](docs/sop/spp-entra-id.md)<br>
-- [Microsoft Entra ID 客戶版 Word](docs/customer/SPP整合Microsoft%20Entra%20ID操作指引.docx)<br>
 
 ## SPS 管理者進階設定（選用）
 
