@@ -2,13 +2,15 @@
 
 ## 目的
 
-讓使用者經 SPP 申請與核准，由 SPS 代理到 Windows 應用程式發佈主機，再開啟指定工具或執行 PowerShell Selenium 代登。本文以 ApexOne 示範如何串接發佈別名、PS1 與 SPP 原則；其他應用程式依各自腳本與登入流程調整。
+讓使用者經 SPP 申請與核准，由 SPS 代理到 Windows 應用程式發佈主機，再開啟指定工具或執行 PowerShell Selenium 代登。瀏覽器自動化統一使用 **Chrome for Testing（CfT）**，搭配同一發布版本的 ChromeDriver，並以 PowerShell 7 執行。本文以 ApexOne 示範如何串接發佈別名、PS1 與 SPP 原則；其他應用程式依各自腳本與登入流程調整。
 
 ## 適用範圍
 
 SPP 畫面為 9.0.0.2807、SPS 為 9.0.0，於 2026-09-30 檢視及補拍。發佈工具與模組目錄圖由使用者提供，屬另一個既有部署案例，不代表與本次實驗室為同一台主機。原理及舊版設定參考文末 8.0 LTS 官方文件，不當作 9.0 全功能相容性證明。
 
-本篇含 11 張操作圖，其中 5 張為這次新拍的 SPP／SPS 畫面。SPP 圖 4–6 已在實機表單填入 ApexOne-RemoteApp、目錄帳戶 sg_svc、RDP 主機 App、顯示名稱 ApexOne 與別名 ||ApexOne 後重新拍攝，拍完已取消並捨棄；SPS 僅展開既有原則，未按 Commit。沒有完成應用程式代登、RDS 安裝或側錄回放驗收。
+本篇含 11 張操作圖，其中 5 張為這次新拍的 SPP／SPS 畫面。SPP 圖 4–6 已在實機表單填入 ApexOne-RemoteApp、目錄帳戶 sg_svc、RDP 主機 App、顯示名稱 ApexOne 與別名 ||ApexOne 後重新拍攝，拍完已取消並捨棄；SPS 僅展開既有原則，未按 Commit。該次拍攝沒有完成應用程式代登、RDS 安裝或側錄回放驗收。
+
+2026-10-08 補入 2026-10-07 的 Chrome for Testing 排錯紀錄：互動測試成功，但 RemoteApp 使用另一個 Windows 帳號而找不到 Chrome，改用 Machine PATH 後使用者回報成功。此案例與前述實驗室截圖分開記錄，不代表已補齊 SPS 側錄回放、多人使用或全部應用程式的驗收。新增案例以 `<CUSTOMER_TEST_USER>` 與 `<CUSTOMER_REMOTEAPP_USER>` 代稱，不保留客戶位址或帳密。
 
 ## 前置條件
 
@@ -16,7 +18,7 @@ SPP 畫面為 9.0.0.2807、SPS 為 9.0.0，於 2026-09-30 檢視及補拍。發�
 
 | 要確認的物件 | 範例或記錄內容 | 與其他物件的關係 |
 |---|---|---|
-| 發佈主機 | `<CUSTOMER_RDS_HOST>` | 執行 Launcher、PowerShell、Chrome 與 PS1 的 Windows 主機 |
+| 發佈主機 | `<CUSTOMER_RDS_HOST>` | 執行 Launcher、PowerShell、Chrome for Testing 與 PS1 的 Windows 主機 |
 | 主機登入帳戶 | `<CUSTOMER_RDS_ACCOUNT>` | 登入 Windows 工作階段；不同於目標網站帳戶 |
 | 目標應用程式 | `<CUSTOMER_APP_HOST>` | ApexOne 等管理網站，供 PS1 的 asset 參數使用 |
 | 應用程式帳戶 | `<CUSTOMER_APP_ACCOUNT>` | 輸入目標網站的帳戶，須納入 SPP 的申請範圍 |
@@ -37,7 +39,7 @@ flowchart LR
     S -->|代理及側錄| R[Windows 應用程式發佈主機]
     R --> L[RemoteApp Launcher]
     L --> W[PowerShell 7 與 PS1]
-    W --> B[Chrome 與 ChromeDriver]
+    W --> B[Chrome for Testing 與 ChromeDriver]
     B -->|應用程式帳戶登入| A[目標網站]
 ```
 
@@ -47,7 +49,7 @@ SPP 管申請與認證，SPS 代理工作階段，PS1 在 Windows 發佈主機�
 
 先依目標版本完成 RemoteApp Launcher 安裝與 RDS 發佈配置。8.0 LTS 官方整合使用 OISGRemoteAppLauncher，再由其命令列指定實際工具；Publisher 畫面列出的業務名稱不能代替檢查其背後 Launcher 設定。[官方 Remote Desktop Application 整合](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/administration-guide/18)。目前沒有 Launcher 安裝精靈與 RDS 發佈精靈的實機圖，這兩段仍需現場確認。
 
-取得 [已保存元件](../../examples/custom-app-login/README.md)，大型套件以 Git LFS 下載。來源是 PowerShell 7.4.6 x64 與 PowerShell Selenium 4.0.0-preview3；它們是歷史案例版本，正式部署另依支援及安全維護要求選版。使用者以 Chrome Dev 搭配相容 ChromeDriver，瀏覽器安裝檔未包含在此目錄。
+取得 [已保存元件](../../examples/custom-app-login/README.md)，大型套件以 Git LFS 下載。來源是 PowerShell 7.4.6 x64 與 PowerShell Selenium 4.0.0-preview3；它們是歷史案例版本，正式部署另依支援及安全維護要求選版。**現行自動化標準為 Chrome for Testing，不使用 Chrome Dev 或一般 Chrome 作為固定版本的自動化瀏覽器。** 瀏覽器套件未包含在此目錄，需另由 Google 官方取得；相關 KB 的 Chrome Dev 描述屬舊案例背景，以本節為現行部署基準。
 
 ![Selenium 模組放置位置](../../examples/custom-app-login/requirements/模組.png)
 
@@ -55,9 +57,120 @@ SPP 管申請與認證，SPS 代理工作階段，PS1 在 Windows 發佈主機�
 
 ![ChromeDriver 所在 assemblies 目錄](../../examples/custom-app-login/requirements/更新driver.png)
 
-圖 2：driver 位於該模組的 assemblies。版本相容是必要條件；還須確認真正啟動的是哪個 Chrome 執行檔。[Google 官方版本配對說明](https://developer.chrome.com/docs/chromedriver/downloads/version-selection)。來源 ZIP 的 driver 與附帶 sha256 不一致，詳見 [KB-003 的套件核對](../kb/custom-app-login-selenium.md)，不能直接以舊雜湊驗收。
+圖 2：歷史配置的 driver 位於該模組的 assemblies，不是現行獨立目錄的示範。現行配置以 `-WebDriverPath` 明確指定 `C:\Automation\chromedriver`，避免模組繼續使用內附舊版。版本相容是必要條件；還須確認真正啟動的是哪個 Chrome 執行檔。[Google 官方版本配對說明](https://developer.chrome.com/docs/chromedriver/downloads/version-selection)。來源 ZIP 的 driver 與附帶 sha256 不一致，詳見 [KB-003 的套件核對](../kb/custom-app-login-selenium.md)，不能直接以舊雜湊驗收。
 
 將 ApexOne.ps1 放到前置表格指定路徑。先以專用測試帳戶驗證模組、網路及目標登入頁；確認可開啟頁面與找到欄位，再進行完整代登。此階段不把正式密碼寫進 PS1 或測試紀錄。
+
+#### 2.1 Chrome for Testing 的部署與版本原則
+
+Chrome Dev／一般 Chrome 的更新會讓自動化環境版本改變；把測試檔案放進既有 Chrome 安裝目錄，也會增加安裝與更新維護互相干擾的風險。本案曾遇到更新或覆蓋問題，但沒有完整更新程序證據，不推論所有 Dev 安裝都會被一般版覆蓋。
+
+Google 提供的 CfT 專供測試且不自動更新，適合固定版本的自動化。一般使用者的瀏覽器維持原本更新管理，不以停用全機 Chrome 更新服務解決自動化問題。[Google Chrome for Testing 說明](https://developer.chrome.com/docs/automation-and-testing/chrome-for-testing)。
+
+從 [CfT 官方下載頁](https://googlechromelabs.github.io/chrome-for-testing/)選定核准版本與 Windows 平台，取得 **同一發布版本**的 Chrome 與 ChromeDriver。解壓縮時保留 Chrome 完整相依檔案，不只複製 chrome.exe；完成後核對：
+
+```text
+C:\Automation\chrome\chrome.exe
+C:\Automation\chromedriver\chromedriver.exe
+```
+
+不要放入 `C:\Program Files\Google\Chrome\Application`；獨立目錄是本專案的部署規範，避免與既有 Chrome 共用檔案。程式目錄由管理者維護，RemoteApp 帳號只授予讀取與執行，日誌另放可寫入位置。CfT 不自動更新仍須安排成套升級、回歸測試與回復版本，不能永久停留在舊版。
+
+#### 2.2 PATH 與實際執行身分
+
+PATH 填的是**包含執行檔的資料夾**，不是執行檔本身：
+
+| 設定 | 正確值 | 常見錯誤 |
+|---|---|---|
+| Chrome PATH | `C:\Automation\chrome` | 填成 `...\chrome.exe`，或多一層不存在的 `...\chrome\chrome` |
+| ChromeDriver PATH | `C:\Automation\chromedriver` | 填成 `...\chromedriver.exe` |
+| 解壓縮層級 | chrome.exe 直接位於標準目錄 | 實際藏在 chrome-win64 子目錄，PATH 卻指向上層 |
+
+User PATH 僅屬於該 Windows 帳號；Machine PATH 為全機設定。程序取得的是啟動時繼承的環境，修改系統設定不會自動刷新既有 RDS 工作階段。[Microsoft 環境變數範圍與繼承](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_environment_variables)。
+
+本案 `<CUSTOMER_TEST_USER>` 的互動測試成功，RemoteApp 卻以 `<CUSTOMER_REMOTEAPP_USER>` 執行，無法使用前者的 User PATH，出現 `cannot find Chrome binary`。改用 Machine PATH 並重新取得環境後，使用者回報成功。**測試與驗收都須以實際 RemoteApp 帳號進行，不能只看管理員視窗的結果。**
+
+以下腳本適用 PowerShell 7，存為 `C:\Automation\Set-AutomationPath.ps1`，以系統管理員執行。它保留原 PATH 順序，僅補上缺少的目錄，並記錄異動前後值；Machine PATH 會影響其他帳號的新程序，先 `-WhatIf`，再 `-Confirm` 套用。
+
+```powershell
+#requires -Version 7.0
+#requires -RunAsAdministrator
+[CmdletBinding(SupportsShouldProcess, ConfirmImpact='High')]
+param()
+$ErrorActionPreference = 'Stop'
+$dirs = @('C:\Automation\chrome',
+          'C:\Automation\chromedriver')
+$files = @('chrome.exe', 'chromedriver.exe')
+for ($i = 0; $i -lt $dirs.Count; $i++) {
+    if (-not (Test-Path (Join-Path $dirs[$i] $files[$i]))) {
+        throw "Missing executable in $($dirs[$i])"
+    }
+}
+$before = [Environment]::GetEnvironmentVariable('Path','Machine')
+$parts = @($before -split ';' | Where-Object { $_.Trim() })
+$normalized = @($parts | ForEach-Object {
+    $_.Trim().TrimEnd('\')
+})
+$add = @($dirs | Where-Object { $_ -notin $normalized })
+if ($add.Count -eq 0) { Write-Output 'No change required'; return }
+$after = (@($parts) + @($add)) -join ';'
+Write-Output "Before: $before"
+Write-Output "After:  $after"
+if ($PSCmdlet.ShouldProcess('Machine PATH','Append automation folders')) {
+    $audit = Join-Path $PSScriptRoot (
+        'PathChange-{0}.csv' -f (Get-Date -Format 'yyyyMMdd-HHmmssfff'))
+    $record = [pscustomobject]@{
+        Time = (Get-Date).ToString('o'); Before = $before
+        Proposed = $after; Actual = $before; Status = 'Prepared'
+    }
+    $record | Export-Csv $audit -NoTypeInformation -Encoding utf8
+    [Environment]::SetEnvironmentVariable('Path',$after,'Machine')
+    $record.Actual = [Environment]::GetEnvironmentVariable('Path','Machine')
+    $record.Status = 'Applied'
+    $record | Export-Csv $audit -NoTypeInformation -Encoding utf8
+    Write-Output "Audit: $audit"
+}
+```
+
+```powershell
+& 'C:\Automation\Set-AutomationPath.ps1' -WhatIf
+& 'C:\Automation\Set-AutomationPath.ps1' -Confirm
+```
+
+確認沒有進行中的工作，再登出並重建實際帳號的 RDS 工作階段。若只重啟子程序，其父程序仍可能帶著舊 PATH。若需回復，依 CSV 的 Before 值比對現況後還原本次新增項目，避免覆蓋後續合法變更。
+
+#### 2.3 PowerShell 7 與模組相容性
+
+腳本開頭加上 `#requires -Version 7.0`，Launcher 明確使用 `pwsh.exe`。Windows PowerShell 5.1／ISE 使用 .NET Framework，PowerShell 7 使用現代 .NET；ISE 不會因安裝 PowerShell 7 而切換引擎。`#requires` 只限制最低版本，不會自動啟動 PowerShell 7。[Microsoft 移轉說明](https://learn.microsoft.com/powershell/scripting/install/migrating-from-windows-powershell-51-to-powershell-7)、[Requires 說明](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_requires?view=powershell-7.4)。
+
+本案在 Windows PowerShell 5.1 載入 WebDriver.dll 失敗，在 PowerShell 7 成功；日誌記錄 PowerShell 7.4.17，命令輸出顯示 Selenium 4.0.0。這是本案觀察，不是所有 Selenium 套件均不支援 5.1 的原廠聲明，也不是現行版本建議。模組顯示 4.0.0 不足以辨識 preview 套件標籤，部署時須留存套件來源與雜湊。
+
+```powershell
+$PSVersionTable | Select-Object PSVersion, PSEdition
+Get-Module Selenium -ListAvailable | Select-Object Name, Version, Path
+Import-Module Selenium -RequiredVersion 4.0.0 -ErrorAction Stop
+Get-Command Start-SeDriver -Syntax
+Get-Command Start-SeDriver | Select-Object Name, Version, Source
+```
+
+以下為儲存庫既有 `selenium.zip` 的介面寫法；已核對其中 `Start-SeDriver`、`New-SeDriverService` 與 Chrome 啟動實作：`-BinaryPath` 接受瀏覽器執行檔，`-WebDriverPath` 接受 Driver **資料夾**，未指定後者時會使用模組的 assemblies。現場不同套件須先核對 `Get-Command` 結果，不能把這兩個參數當成所有 Selenium PowerShell 模組的通用介面。[已保存套件](../../examples/custom-app-login/README.md)。
+
+```powershell
+#requires -Version 7.0
+Import-Module Selenium -RequiredVersion 4.0.0 -ErrorAction Stop
+$asset = 'https://<CUSTOMER_APP_HOST>:<CUSTOMER_APP_PORT>/'
+Start-SeDriver -Browser Chrome `
+    -BinaryPath 'C:\Automation\chrome\chrome.exe' `
+    -WebDriverPath 'C:\Automation\chromedriver' `
+    -Arguments @('--start-maximized') `
+    -StartURL $asset
+```
+
+單獨測試時，先在同一工作階段指定 `$asset`，不能假設它已從原 PS1 傳入。這裡的 `-StartURL` 使用完整 URL；原 ApexOne 腳本的 `-asset` 自行補 `https://`，仍要依原腳本介面傳入，避免重複 scheme。
+
+本案排錯曾使用 `@('--start-maximized', '--ignore-certificate-errors')`。前者最大化視窗，後者略過憑證相關錯誤；正式設定預設只保留前者，修正憑證鏈與名稱後驗收。忽略憑證只限受控測試，不作通用正式設定。[Chromium 參數定義](https://chromium.googlesource.com/chromium/src/+/5a60c8bb002e4573dd0809f4a78d56b4c9720add/chrome/common/chrome_switches.cc)。
+
+明確指定路徑可避免同機其他 Chrome 或模組內附 Driver 被誤用；Machine PATH 則提供各帳號一致的命令搜尋環境。`where.exe` 成功只證明搜尋結果，不能代替核對 Selenium 實際使用的執行檔。[Google ChromeOptions 說明](https://developer.chrome.com/docs/chromedriver/capabilities)。
 
 ### 3. 在 Publisher 建立並核對發佈項目
 
@@ -79,6 +192,66 @@ SPP 管申請與認證，SPS 代理工作階段，PS1 在 Windows 發佈主機�
 | `-asset` | 目標位址 | ApexOne 腳本自行補 https://，避免重複 scheme |
 
 來源 `pwsh.txt` 另使用 `{Target.AssetNetworkAddress}`。兩種替代欄位不能任意互換；須依當版 Launcher／SPP 設定確認實際帶入值。尤其不要同時把目標 Network Address 設為 None，卻又期待該欄位提供網站位址。實際資產建模與欄位映射尚缺已完成案例畫面，須以測試結果決定。
+
+#### 3.1 用腳本內日誌定位閃退
+
+不要把 `*> C:\...\debug.log` 直接放入 Launcher 傳給 `pwsh.exe -File` 的參數。`*>` 是 PowerShell 語法；外層若未透過 PowerShell 剖析，不會自動變成重新導向，反而可能被當成腳本參數。[Microsoft pwsh 的 File 參數](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_pwsh?view=powershell-7.4)。
+
+以下為獨立啟動診斷腳本，可存為 `C:\Automation\Test-BrowserStart.ps1`。它使用實際帳號的 TEMP 目錄，透過 `try/catch` 與 `Out-File` 記錄階段，不接收或記錄密碼。此測試只確認瀏覽器啟動，完整代登仍須由既有 PS1 與 RemoteApp 入口驗收。
+
+```powershell
+#requires -Version 7.0
+[CmdletBinding()]
+param([Parameter(Mandatory)][string]$Asset)
+$ErrorActionPreference = 'Stop'
+$log = Join-Path ([IO.Path]::GetTempPath()) (
+    'BrowserStart-{0}-{1}.log' -f (Get-Date -Format 'yyyyMMdd-HHmmss'),$PID)
+function Write-Log([string]$Text) {
+    '[{0}] {1}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'),$Text |
+        Out-File -LiteralPath $log -Append -Encoding utf8
+}
+$stage = 'Validate URL'
+try {
+    Write-Log 'Script started'
+    Write-Log "PowerShell: $($PSVersionTable.PSVersion)"
+    $uri = $null
+    if (-not [Uri]::TryCreate($Asset,[UriKind]::Absolute,[ref]$uri) -or
+        $uri.Scheme -notin @('https','http')) {
+        throw 'Invalid URL'
+    }
+    $stage = 'Import module'
+    Import-Module Selenium -RequiredVersion 4.0.0 -ErrorAction Stop
+    $stage = 'Start-SeDriver'
+    Start-SeDriver -Browser Chrome `
+        -BinaryPath 'C:\Automation\chrome\chrome.exe' `
+        -WebDriverPath 'C:\Automation\chromedriver' `
+        -Arguments @('--start-maximized') `
+        -StartURL $Asset | Out-Null
+    Write-Log 'Start-SeDriver completed'
+}
+catch {
+    $reason = 'Unclassified failure'
+    if ($_.Exception.ToString() -match 'cannot find Chrome binary') {
+        $reason = 'cannot find Chrome binary'
+    } elseif ($_.Exception.ToString() -match 'only supports Chrome version') {
+        $reason = 'ChromeDriver version mismatch'
+    }
+    Write-Log "ERROR stage=$stage; reason=$reason"
+    throw "Browser startup failed at $stage. Review local log: $log"
+}
+finally {
+    Write-Output "Log: $log"
+}
+```
+
+```powershell
+& 'C:\Automation\Test-BrowserStart.ps1' `
+    -Asset 'https://<CUSTOMER_APP_HOST>:<CUSTOMER_APP_PORT>/'
+```
+
+整合回既有 PS1 時，將日誌初始化放在 `param(...)` 後、模組載入前，保留原本登入與結束處理，加入各階段成功標記。不要落盤 `$password`、完整命令列、Token、Cookie 或完整 `$_ | Format-List *`；錯誤物件可能含參數或頁面資料，範例只輸出白名單錯誤分類。`#requires` 失敗發生在腳本執行前，不會被這個 catch 捕捉，須先確認啟動的是 pwsh.exe。
+
+日誌與 `whoami` 的原始結果留在受控位置；對外分享前去識別，且不要為排錯開啟會收錄密碼的整段 Transcript。多人使用時只清理自己建立的 Driver／瀏覽器，不以全機 `taskkill /f /im` 結束其他人的工作。
 
 ### 4. 在 SPP 區分發佈主機與應用程式資產
 
@@ -167,6 +340,46 @@ Windows Server 資產用來連線至發佈主機；應用程式資產及帳戶�
 | 多人使用 | 兩個工作階段互不干擾 | 不同身分的測試結果 |
 
 目前已補上填妥的 RemoteApp 表單；仍缺 Launcher／RDS 安裝及發佈精靈、原則儲存後的確認，以及上表的端到端成功截圖；不能用前述設定圖代替。現場補證據時，避免截入密碼、Token、完整一次性連線字串與客戶個資。
+
+#### 8.1 瀏覽器自動化驗收清單
+
+在實際 RemoteApp 帳號的新工作階段執行以下唯讀檢查，再以單一核准測試對象進行完整腳本測試：
+
+```powershell
+whoami
+where.exe chrome.exe
+where.exe chromedriver.exe
+$PSVersionTable | Select-Object PSVersion, PSEdition
+(Get-Item 'C:\Automation\chrome\chrome.exe').VersionInfo |
+    Select-Object ProductVersion, FileVersion
+& 'C:\Automation\chromedriver\chromedriver.exe' --version
+Import-Module Selenium -RequiredVersion 4.0.0 -ErrorAction Stop
+Get-Command Start-SeDriver | Select-Object Name, Version, Source
+Get-Command Start-SeDriver -Syntax
+```
+
+- [ ] `whoami` 為核准的 `<CUSTOMER_REMOTEAPP_USER>`，不是另一個互動測試帳號。
+- [ ] `where.exe` 可找到兩個標準路徑；若有多筆，已核對明確指定的實際啟動路徑。
+- [ ] Chrome for Testing 與 ChromeDriver 為同一發布版本，保留完整版本及套件雜湊，不只比主版號。
+- [ ] 模組可於 PowerShell 7 載入，`Start-SeDriver` 存在，參數與現場套件一致。
+- [ ] 最小啟動測試開啟正確 URL，日誌出現 `Start-SeDriver completed`。
+- [ ] 原完整 PS1 完成登入、頁面操作與結束流程，且無新 ERROR；原入口的 `asset` 格式與特殊字元密碼另有驗證。
+- [ ] 由 Safeguard／RemoteApp 入口重測；側錄回放及多人使用仍依上表各自驗收。
+
+#### 8.2 典型錯誤與判斷
+
+| 錯誤或現象 | 優先判斷 | 修正方向 |
+|---|---|---|
+| `cannot find Chrome binary (SessionNotCreated)` | 實際帳號、程序 PATH、檔案存在與讀取權限 | 本案以 Machine PATH 解決；現行範例另明確指定 BinaryPath，不先改網站登入操作 |
+| WebDriver.dll 載入失敗 | PowerShell 引擎、模組路徑及原始例外 | 本案改用 PowerShell 7；不把本案結論泛化成所有 5.1 不相容 |
+| 無法辨識 `Start-SeDriver` | Import-Module 是否成功、實際帳號能否探索模組 | 修復模組安裝位置與載入，再測瀏覽器 |
+| `StartURL` 轉換失敗，`Only String attributes are supported` | `$asset` 是否有值、是否為字串與有效 URL | 本案單獨貼指令時未指定 `$asset`，補值後測試 |
+| `only supports Chrome version ...` | 實際瀏覽器與 Driver 完整版本 | 換用同版本 CfT 成套檔案，並檢查是否仍使用 assemblies 內舊 Driver |
+| 改 PATH 後仍失敗 | 工作階段是否仍繼承舊環境 | 確認無進行中工作後重建該 RDS 工作階段 |
+| 閃退且沒有日誌 | pwsh 入口、requires、日誌目錄權限、最後成功階段 | 先確認腳本確實執行，再依日誌定位；不能只憑閃退判定版本不符 |
+| 瀏覽器開啟但未登入 | URL、等待條件、欄位選取器與目標驗證 | 轉入原 PS1 的頁面操作排錯，不反覆修改 PATH |
+
+2026-10-07 本案從啟動到錯誤約三秒，發生在 WebDriver 建立工作階段時；完成 Machine PATH 調整後由使用者回報成功。以上紀錄不是本次文件更新對客戶設備重新測試的結果。
 
 ## 注意事項
 
