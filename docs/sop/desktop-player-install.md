@@ -29,6 +29,8 @@
 
 ## 相關文件
 
+- [KB-004：回放失敗與簽章、時間戳記驗證](../kb/sps-player-signature-timestamp.md)
+
 - [官方：SPS 8.0 LTS，播放器指南與需求](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-sessions/8.0%20lts/safeguard-desktop-player-user-guide)
 - [官方：Windows 安裝步驟](https://support.oneidentity.com/es-es/technical-documents/one-identity-safeguard-for-privileged-sessions/8.0-lts/safeguard-desktop-player-user-guide/2)
 - [回專案目錄](../../README.md)

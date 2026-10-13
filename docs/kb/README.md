@@ -8,6 +8,8 @@
 | KB-002 | [RDP 工作階段重新導向本機磁碟](safeguard-rdp-drive-redirection.md) | 原文件未載 SPP／SPS 版本；保留歷史操作圖 |
 | KB-003 | [RemoteApp／PowerShell Selenium 客製化代登](custom-app-login-selenium.md) | 16 支來源 PS1、6 個 requirement 檔案與發佈截圖；未執行驗收 |
 
+| KB-004 | [Player 回放與簽章、時間戳記驗證](sps-player-signature-timestamp.md) | SPS 9.0 案例紀錄；Player 版本未記錄，未獨立重現 |
+
 ## 來源與保存
 
 2026-09-30 由使用者提供兩份 Word 文件，原始檔逐位元複製至本機 `docs/kb/source-documents-local/`，不改動來源 Word。該資料夾由 `.gitignore` 排除，不會隨 clone 取得；[sources.json](sources.json) 記錄檔名、大小及 SHA-256，可核對本機原檔。
