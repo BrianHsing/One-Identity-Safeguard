@@ -4,7 +4,7 @@
 
 環境為 SPS 9.0.0、SPP 9.0，用戶端為 Windows 上的 One Identity Session Audit Player（舊稱 Safeguard Desktop Player）。從 SPP 活動中心啟動側錄回放時，依序遇到三個現象：側錄下載不下來、跳出 SSL 憑證錯誤、可以播放但「簽章」「時間戳記」顯示 X。應分別檢查名稱解析、HTTPS 信任與側錄驗證，不把三者視為同一問題。
 
-本文保留來源文件的單一實驗環境紀錄，未附原始日誌或截圖，亦未獨立重現；不代表客戶正式環境驗收。Player 完整版本未記錄，匯入介面須依現場版本確認。下文以 `<CUSTOMER_SPP_FQDN>`、`<CUSTOMER_SPS_FQDN>` 代表環境值，憑證指紋與序號因環境而異，不列出實驗值。
+本文保留來源文件的單一實驗環境紀錄，歷史錯誤未附原始日誌，亦未獨立重現；不代表客戶正式環境驗收。Player 完整版本未記錄，匯入介面須依現場版本確認。下文以 `<CUSTOMER_SPP_FQDN>`、`<CUSTOMER_SPS_FQDN>` 代表環境值，憑證指紋與序號因環境而異，不列出實驗值。
 
 ## 現象一：Player 找不到 SPP 主機
 
@@ -36,6 +36,17 @@ DNS 正常後，Player 下載側錄時跳出「憑證錯誤：無法驗證 SSL �
 
 在 **Policies > Audit Policies** 開啟連線所用的稽核原則，本例為 `safeguard_default`，已勾選 Enable timestamping（Server：Local）與 Enable signing（指定 X.509 憑證與私鑰），Signing and timestamping interval 為 30 秒。在 **Traffic Controls > RDP > Connections** 展開 SPP 使用的連線原則，本例為 `safeguard_rdp`，確認 Audit policy 欄位選的是上述原則，而不是未啟用簽章的 `default`。
 
+
+
+![safeguard_default 已啟用 Local 時間戳記及簽章，間隔為 30 秒。此圖確認原則設定，不代表某一筆側錄已驗證成功。](../../images/kb/player-signature-timestamp/sps-audit-policy.png)
+
+圖 1：safeguard_default 已啟用 Local 時間戳記及簽章，間隔為 30 秒。此圖確認原則設定，不代表某一筆側錄已驗證成功。
+
+
+![RDP 連線的 Audit policy 選用 safeguard_default；不要與相鄰的 Channel policy 或 RDP settings 混淆。](../../images/kb/player-signature-timestamp/sps-rdp-audit.png)
+
+圖 2：RDP 連線的 Audit policy 選用 safeguard_default；不要與相鄰的 Channel policy 或 RDP settings 混淆。
+
 依官方文件，稽核原則包含加密、時間戳記與簽章設定；未使用自訂原則時，修改預設原則會影響所有使用它的稽核通道。正式環境建議另建原則再指派給需要的連線。
 
 本次觀察與推論：原則變更只影響之後建立的工作階段。測試時應開一條新連線、結束後再回放，不要以標示「即時」、仍在進行中的工作階段判斷結果。
@@ -48,9 +59,21 @@ DNS 正常後，Player 下載側錄時跳出「憑證錯誤：無法驗證 SSL �
 
 第二張是 SPS CA。位置在 **Basic Settings > Management > SSL certificates** 的 CA X.509 certificate，例如 `CN=<CUSTOMER_SPS_FQDN> root CA`。同一區塊的 TSA X.509 certificate 由它簽發，內建時間戳記服務使用的就是 TSA 憑證，所以匯入 CA 即可，不必匯入 TSA 憑證本身。下載時點選憑證連結，不要下載 CA private key。
 
+
+
+![Management 的 SSL certificates 區分 CA、Server 與 TSA 憑證。Local 時間戳記驗證須核對 CA X.509 certificate；不要下載 private key。環境識別資訊已遮蔽。](../../images/kb/player-signature-timestamp/sps-certificates.png)
+
+圖 3：Management 的 SSL certificates 區分 CA、Server 與 TSA 憑證。Local 時間戳記驗證須核對 CA X.509 certificate；不要下載 private key。環境識別資訊已遮蔽。
+
 以下匯入條件參考 SPS 7.0.2 LTS Player 指南，現場 Player 版本仍須核對：憑證檔採 PEM 格式，先複製到用戶端本機資料夾，不直接從網路共用匯入。
 
 匯入方式：在 Player 右上齒輪進入金鑰／憑證畫面，選擇憑證檔後按「載入」，核對 Subject、Issuer 與指紋，再從下拉選單選「儲存為信任的根憑證」，按「匯入」。「僅暫時儲存」在關閉 Player 後即失效；「儲存為個人憑證」用於解密加密側錄，都不適用於此情境。
+
+
+
+![Player 載入公開憑證後可核對發行至、發行者與指紋，再選擇「儲存為信任的根憑證」。圖中僅展開選項，尚未按「匯入」；深色區塊為已遮蔽的路徑、序號及指紋。](../../images/kb/player-signature-timestamp/player-import-options.png)
+
+圖 4：Player 載入公開憑證後可核對發行至、發行者與指紋，再選擇「儲存為信任的根憑證」。圖中僅展開選項，尚未按「匯入」；深色區塊為已遮蔽的路徑、序號及指紋。
 
 多台稽核人員電腦時，可改以 GPO 將憑證派送至本機電腦的「受信任的根憑證授權單位」。官方 Player 指南記載 Windows 上會從 Local Computer > Trusted Root Certification Authorities 取得憑證。
 
