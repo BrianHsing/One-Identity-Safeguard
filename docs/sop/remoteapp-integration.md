@@ -8,7 +8,7 @@
 
 SPP 畫面為 9.0.0.2807、SPS 為 9.0.0，於 2026-09-30 檢視及補拍。發佈工具與模組目錄圖由使用者提供，屬另一個既有部署案例，不代表與本次實驗室為同一台主機。原理及舊版設定參考文末 8.0 LTS 官方文件，不當作 9.0 全功能相容性證明。
 
-本篇含 11 張操作圖，其中 5 張為這次新拍的 SPP／SPS 畫面。SPP 圖 4–6 已在實機表單填入 ApexOne-RemoteApp、目錄帳戶 sg_svc、RDP 主機 App、顯示名稱 ApexOne 與別名 ||ApexOne 後重新拍攝，拍完已取消並捨棄；SPS 僅展開既有原則，未按 Commit。該次拍攝沒有完成應用程式代登、RDS 安裝或側錄回放驗收。
+本篇含 14 張操作圖，其中 5 張為這次新拍的 SPP／SPS 畫面。SPP 圖 7–9 已在實機表單填入 ApexOne-RemoteApp、目錄帳戶 sg_svc、RDP 主機 App、顯示名稱 ApexOne 與別名 ||ApexOne 後重新拍攝，拍完已取消並捨棄；SPS 僅展開既有原則，未按 Commit。該次拍攝沒有完成應用程式代登、RDS 安裝或側錄回放驗收。
 
 2026-10-08 補入 2026-10-07 的 Chrome for Testing 排錯紀錄：互動測試成功，但 RemoteApp 使用另一個 Windows 帳號而找不到 Chrome，改用 Machine PATH 後使用者回報成功。此案例與前述實驗室截圖分開記錄，不代表已補齊 SPS 側錄回放、多人使用或全部應用程式的驗收。新增案例以 `<CUSTOMER_TEST_USER>` 與 `<CUSTOMER_REMOTEAPP_USER>` 代稱，不保留客戶位址或帳密。
 
@@ -47,17 +47,59 @@ SPP 管申請與認證，SPS 代理工作階段，PS1 在 Windows 發佈主機�
 
 ### 2. 準備發佈主機與 Selenium 元件
 
+#### 發佈主機的 RemoteApp 登錄與群組原則
+
+以下設定作用於 **Windows 應用程式發佈主機 `<CUSTOMER_RDS_HOST>`**，不是 SPP、SPS 或使用者的電腦。先記錄 Windows／RDS 與 Publisher 版本，確認主機由哪個 GPO 管理，再於核准的變更範圍內套用。
+
+登錄位置為 `HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services`。兩個值都使用 **DWORD（32 位元）**，即使作業系統為 64 位元也相同。
+
+| 值名稱 | 本案例設定 | 用途與限制 |
+|---|---|---|
+| `fAllowUnlistedRemotePrograms` | `1` | 允許清單外遠端程式。本案例截圖採用；實際套用前須取得核准。不是所有 RemoteApp 部署的必要條件或安全預設。 |
+| `fEnableRemoteFXAdvancedRemoteApp` | `0` | 停用 RemoteApp 進階圖形功能，依 One Identity Launcher 教學配置；不等於停用 RemoteFX vGPU。 |
+
+One Identity 的 [Launcher 設定教學](https://github.com/OneIdentity/SafeguardAutomation/blob/master/RDP%20Applications/Tutorial/README.md)指定第二個值為 `0`。Microsoft 對應原則為 **Computer Configuration > Administrative Templates > Windows Components > Remote Desktop Services > Remote Desktop Session Host > Remote Session Environment > Use advanced RemoteFX graphics for RemoteApp**，設為 **Disabled**。[Microsoft 原則說明](https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-admx-terminalserver#ts_server_advanced_remotefx_remoteapp)。該 CSP 頁面的 Windows 用戶端適用表不能當成 Windows Server 最早支援版本；Server 環境仍須核對實際 ADMX 與有效原則。本節不構成 SPS 9.0 全功能相容性驗收。
+
+變更前在登錄編輯程式匯出上述機碼，並另記錄兩個值的原始類型、數值或「原本不存在」。機碼不存在時也要記錄，不能以空白截圖代替備份。若由網域 GPO 控管，先備份並修訂具權威性的 GPO，再確認套用結果；不要持續以本機值對抗 GPO。[Microsoft 群組原則處理順序](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/group-policy/group-policy-processing)。
+
+獲准採用本案例設定時，由管理者在指定機碼建立或修改上述 DWORD；只處理這兩個值，保留其他設定。清單外程式的開放須搭配專用發佈主機、最小登入權限、核准程式執行限制及目的地存取限制，並驗證使用者不能藉檔案對話框或子程序啟動未核准工具。
+
+以下為在發佈主機執行的唯讀核對，適用 PowerShell 7。記錄登錄編輯程式顯示的型別，並保存這兩個值的查詢結果；查無值不等於已設為 `0`。
+
+```powershell
+#requires -Version 7.0
+$remoteAppPolicyKey = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+if (Test-Path -LiteralPath $remoteAppPolicyKey) {
+    Get-ItemProperty -LiteralPath $remoteAppPolicyKey |
+        Select-Object fAllowUnlistedRemotePrograms, fEnableRemoteFXAdvancedRemoteApp
+} else {
+    Write-Output 'Terminal Services policy key does not exist.'
+}
+```
+
+透過新的核准測試工作階段驗證，不為了補圖或測試而停止正式 RDS 連線。若需回復，將既有值還原原類型與數值；原本不存在者只移除本次新增的值，不刪除整個 Terminal Services 機碼。直接匯入 `.reg` 備份不會自動刪除後來新增的值，必須依變更紀錄核對；GPO 管理者則從原 GPO 回復並確認有效結果。
+
+![RemoteApp 的 DWORD 設定說明](../../images/sop/remoteapp-host-options/remoteapp-registry-explanation.png)
+
+圖 1：登錄位置與兩個 DWORD 的用途說明。這是設定說明圖；適用版本與限制依本節官方資料核對，不能當成實機驗收結果。
+
+![發佈主機的兩個 RemoteApp 登錄值](../../images/sop/remoteapp-host-options/remoteapp-registry-values.png)
+
+圖 2：登錄編輯程式顯示 `fAllowUnlistedRemotePrograms` 為 REG_DWORD `1`，`fEnableRemoteFXAdvancedRemoteApp` 為 REG_DWORD `0`，位置與上表一致。此圖僅呈現登錄值，不代表有效 GPO 或應用程式代登已驗證成功。
+
+#### Launcher 與 Selenium 元件準備
+
 先依目標版本完成 RemoteApp Launcher 安裝與 RDS 發佈配置。8.0 LTS 官方整合使用 OISGRemoteAppLauncher，再由其命令列指定實際工具；Publisher 畫面列出的業務名稱不能代替檢查其背後 Launcher 設定。[官方 Remote Desktop Application 整合](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/8.0%20lts/administration-guide/18)。目前沒有 Launcher 安裝精靈與 RDS 發佈精靈的實機圖，這兩段仍需現場確認。
 
 取得 [已保存元件](../../examples/custom-app-login/README.md)，大型套件以 Git LFS 下載。來源是 PowerShell 7.4.6 x64 與 PowerShell Selenium 4.0.0-preview3；它們是歷史案例版本，正式部署另依支援及安全維護要求選版。**現行自動化標準為 Chrome for Testing，不使用 Chrome Dev 或一般 Chrome 作為固定版本的自動化瀏覽器。** 瀏覽器套件未包含在此目錄，需另由 Google 官方取得；相關 KB 的 Chrome Dev 描述屬舊案例背景，以本節為現行部署基準。
 
 ![Selenium 模組放置位置](../../examples/custom-app-login/requirements/模組.png)
 
-圖 1：原環境將 selenium 放在 `C:\Program Files\PowerShell\7\Modules`。須用實際 RemoteApp 執行帳戶確認模組可讀取，不能只在管理員自己的使用者模組目錄安裝。
+圖 3：原環境將 selenium 放在 `C:\Program Files\PowerShell\7\Modules`。須用實際 RemoteApp 執行帳戶確認模組可讀取，不能只在管理員自己的使用者模組目錄安裝。
 
 ![ChromeDriver 所在 assemblies 目錄](../../examples/custom-app-login/requirements/更新driver.png)
 
-圖 2：歷史配置的 driver 位於該模組的 assemblies，不是現行獨立目錄的示範。現行配置以 `-WebDriverPath` 明確指定 `C:\Automation\chromedriver`，避免模組繼續使用內附舊版。版本相容是必要條件；還須確認真正啟動的是哪個 Chrome 執行檔。[Google 官方版本配對說明](https://developer.chrome.com/docs/chromedriver/downloads/version-selection)。來源 ZIP 的 driver 與附帶 sha256 不一致，詳見 [KB-003 的套件核對](../kb/custom-app-login-selenium.md)，不能直接以舊雜湊驗收。
+圖 4：歷史配置的 driver 位於該模組的 assemblies，不是現行獨立目錄的示範。現行配置以 `-WebDriverPath` 明確指定 `C:\Automation\chromedriver`，避免模組繼續使用內附舊版。版本相容是必要條件；還須確認真正啟動的是哪個 Chrome 執行檔。[Google 官方版本配對說明](https://developer.chrome.com/docs/chromedriver/downloads/version-selection)。來源 ZIP 的 driver 與附帶 sha256 不一致，詳見 [KB-003 的套件核對](../kb/custom-app-login-selenium.md)，不能直接以舊雜湊驗收。
 
 將 ApexOne.ps1 放到前置表格指定路徑。先以專用測試帳戶驗證模組、網路及目標登入頁；確認可開啟頁面與找到欄位，再進行完整代登。此階段不把正式密碼寫進 PS1 或測試紀錄。
 
@@ -174,9 +216,23 @@ Start-SeDriver -Browser Chrome `
 
 ### 3. 在 Publisher 建立並核對發佈項目
 
+#### Host Options 與登錄值核對
+
+本段以 **Remote Application Publisher 1.0.1.1905** 的實作為準；下方既有發佈清單圖為 1.0.3.48455，不能把兩版畫面視為同一版本驗收。建立發佈項目前，先從右上角齒輪選單開啟 **Host Options**，核對 **Allow Unlisted Remote Programs**。本案例截圖採用勾選狀態；實際套用前須取得核准，再按 **Save**；應先完成第 2 節的機碼確認，儲存後重新執行唯讀查詢確認 `fAllowUnlistedRemotePrograms=1`。
+
+該版本原始碼顯示：勾選後寫入 DWORD `1`；取消勾選後儲存會**刪除該值**，不是寫入 `0`。若 `Policies\Microsoft\Windows NT\Terminal Services` 不存在，Save 會直接返回，不能只看畫面勾選就判定生效。**Disable Allow List** 則寫入另一位置 `SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\TSAppAllowList` 的 `fDisabledAllowList`，不是本節選項；Save 也會處理其他 Host Options，因此儲存前須記錄並核對整個對話框，避免附帶改變逾時等設定。[1.0.1.1905 官方原始碼](https://github.com/OneIdentity/RemoteApplicationPublisher/blob/release-1.0.1.1905/RemoteApplicationPublisher/RemoteAppHostOptions.cs)。
+
+若查值不符或稍後被改回，先核對權限、機碼與有效 GPO；不要另勾 Disable Allow List 來掩蓋問題。完成後依第 8 節以實際 RemoteApp 帳戶重測程式啟動、代登與側錄。
+
+![Publisher 齒輪選單與 Host Options](../../images/sop/remoteapp-host-options/publisher-host-options.png)
+
+圖 5：Remote Application Publisher 1.0.1.1905 從右上角齒輪選單進入 Host Options，圖中 **Allow Unlisted Remote Programs** 已勾選。其他 Timeout／Logoff 選項是原案例畫面中的設定，不是本篇建議值或必要條件；請勿整組照抄。畫面未證明已按 Save 或完成端到端驗收。
+
+#### 發佈別名與命令列
+
 ![Remote Application Publisher 的 11 筆發佈項目](../../images/kb/custom-app-login/remote-application-publisher.png)
 
-圖 3：使用者提供的 Remote Application Publisher 1.0.3.48455 畫面。ApexOne 的 Program Path 是 `||ApexOne`，Command Line 呼叫 pwsh.exe。右側部分 Fortigate 命令列已被裁切，不據此猜測完整內容。
+圖 6：使用者提供的 Remote Application Publisher 1.0.3.48455 畫面。ApexOne 的 Program Path 是 `||ApexOne`，Command Line 呼叫 pwsh.exe。右側部分 Fortigate 命令列已被裁切，不據此猜測完整內容。
 
 選取對應項目後核對 Name、Full Name、Program Path 及 Command Line。以下是圖中 ApexOne 的呼叫方式，用於 Launcher／Publisher 設定，不是直接在 PowerShell 視窗執行的指令：
 
@@ -265,7 +321,7 @@ Windows Server 資產用來連線至發佈主機；應用程式資產及帳戶�
 
 ![SPP RDP 應用程式類型](../../images/sop/spp-remoteapp-type.jpg)
 
-圖 4：實機填入名稱 ApexOne-RemoteApp、描述「ApexOne 網頁代登，使用目錄帳戶」，並選取工作階段／RDP 應用程式。上方 RDP 是原編輯視窗標題，名稱欄位已填入示範值；拍攝後未儲存。
+圖 7：實機填入名稱 ApexOne-RemoteApp、描述「ApexOne 網頁代登，使用目錄帳戶」，並選取工作階段／RDP 應用程式。上方 RDP 是原編輯視窗標題，名稱欄位已填入示範值；拍攝後未儲存。
 
 切到「安全性」，依下表填寫。本文採「目錄帳戶」，按其下方「瀏覽」選取已納管的目錄帳戶，不使用「連結的帳戶」。接著按 RDP 主機資產旁的另一個「瀏覽」選主機；兩個瀏覽按鈕用途不同。
 
@@ -283,7 +339,7 @@ Windows Server 資產用來連線至發佈主機；應用程式資產及帳戶�
 
 ![SPP SPS 連線原則與 RDP 主機資產](../../images/sop/spp-remoteapp-host.jpg)
 
-圖 5：已選取「目錄帳戶」，清單顯示 sg_svc，RDP 主機資產填入 App，應用程式顯示名稱為 ApexOne；圖文使用同一組值。
+圖 8：已選取「目錄帳戶」，清單顯示 sg_svc，RDP 主機資產填入 App，應用程式顯示名稱為 ApexOne；圖文使用同一組值。
 
 「目錄帳戶」與「需要主機帳戶」是不同設定。圖中「需要主機帳戶」未勾選；8.0 LTS 官方文件說明此時會在工作階段初始化要求提供主機認證，不能把 sg_svc 自動視為 Windows 主機登入帳戶。若設計要求預先指定主機帳戶，須另外勾選並選取經核准的主機帳戶，再驗證 9.0 實際流程。[官方帳戶與主機欄位說明](https://support.oneidentity.com/it-it/technical-documents/one-identity-safeguard/8.0%20lts/administration-guide/101)。
 
@@ -291,13 +347,13 @@ Windows Server 資產用來連線至發佈主機；應用程式資產及帳戶�
 
 ![SPP 應用程式別名欄位](../../images/sop/spp-remoteapp-alias.jpg)
 
-圖 6：同一實機表單已填入 ApexOne 與 `||ApexOne`，並保留上方目錄帳戶 sg_svc 及主機 App 供對照。圖 3 是使用者提供的發佈案例；本圖是實驗室填寫示範，尚未做兩端連線驗收。
+圖 9：同一實機表單已填入 ApexOne 與 `||ApexOne`，並保留上方目錄帳戶 sg_svc 及主機 App 供對照。圖 6 是使用者提供的發佈案例；本圖是實驗室填寫示範，尚未做兩端連線驗收。
 
 「範圍」只加入本次應用程式所需資產及帳戶；權利的「使用者」加入申請人。「工作流程 > 核准者」指定核准人、人數、期限與通知，核准人不等同申請人。
 
 ![核准者與所需核准數量](../../images/sop/spp-approver.jpg)
 
-圖 7：既有一般 RDP 原則的核准欄位定位，畫面為需要 1 人、sgadmin；不是新增 RemoteApp 原則的完成紀錄。另核對緊急存取是否符合制度，避免例外路徑跳過一般核准。
+圖 10：既有一般 RDP 原則的核准欄位定位，畫面為需要 1 人、sgadmin；不是新增 RemoteApp 原則的完成紀錄。另核對緊急存取是否符合制度，避免例外路徑跳過一般核准。
 
 ### 6. 在 SPS 核對通道原則
 
@@ -305,11 +361,11 @@ Windows Server 資產用來連線至發佈主機；應用程式資產及帳戶�
 
 ![SPS Drawing 與側錄設定](../../images/sop/sps-remoteapp-drawing.jpg)
 
-圖 8：原則名稱 safeguard_default 可見，Drawing 的 Record audit trail 已勾選。這只證明配置，尚未證明有可播放的 RemoteApp 側錄。
+圖 11：原則名稱 safeguard_default 可見，Drawing 的 Record audit trail 已勾選。這只證明配置，尚未證明有可播放的 RemoteApp 側錄。
 
 ![SPS Dynamic virtual channel 與 Custom 通道](../../images/sop/sps-remoteapp-channels.jpg)
 
-圖 9：同一原則下方可見 Dynamic virtual channel，以及 Custom 的三筆 Permitted channels：rail、rail_ri、rail_wi。原則名稱因捲動不在此圖，與圖 8 配對閱讀。下方 Clipboard 是現場既有值，不是本篇要求必須開放。
+圖 12：同一原則下方可見 Dynamic virtual channel，以及 Custom 的三筆 Permitted channels：rail、rail_ri、rail_wi。原則名稱因捲動不在此圖，與圖 11 配對閱讀。下方 Clipboard 是現場既有值，不是本篇要求必須開放。
 
 依當版整合需求核對 Drawing、Dynamic virtual channel 與 Custom 通道。8.0 LTS SPP 整合說明中的 Dynamic virtual channel 不另填設定，Custom 加入上述三筆。不要把它們填進錯誤的通道類型，也不要為了讓程式啟動而改成全部允許。
 
@@ -319,13 +375,13 @@ Windows Server 資產用來連線至發佈主機；應用程式資產及帳戶�
 
 ![RDP Connection 的 Channel policy 指派位置](../../images/sop/sps-rdp-policy-assignment.jpg)
 
-圖 10：既有 Connection 的局部畫面，Channel policy 為 safeguard_default。此圖不含 Connection 名稱；不能靠此局部圖判定 SPP 一定使用它。圖中備份與封存欄位空白，也不代表保存流程已完成。
+圖 13：既有 Connection 的局部畫面，Channel policy 為 safeguard_default。此圖不含 Connection 名稱；不能靠此局部圖判定 SPP 一定使用它。圖中備份與封存欄位空白，也不代表保存流程已完成。
 
 ### 8. 申請、啟動與驗收
 
 ![SPP 使用者申請與核准入口](../../images/sop/spp-home.jpg)
 
-圖 11：首頁「我的要求」、「新要求」與「核准」入口，沿用管理員首頁定位圖；不是測試使用者已申請成功的證據。
+圖 14：首頁「我的要求」、「新要求」與「核准」入口，沿用管理員首頁定位圖；不是測試使用者已申請成功的證據。
 
 使用專用申請人提出該應用程式要求，由另一個核准身分處理，要求可用後啟動。直接啟動涉及本機協定處理程式時，先完成 [SCALUS 配置](scalus-install.md)；不要把使用者電腦上的 SCALUS 與發佈主機上的 Launcher 混為一談。
 
@@ -359,6 +415,8 @@ Get-Command Start-SeDriver -Syntax
 ```
 
 - [ ] `whoami` 為核准的 `<CUSTOMER_REMOTEAPP_USER>`，不是另一個互動測試帳號。
+- [ ] 已完成第 2 節登錄備份與有效 GPO 核對；核准採本案例配置時，兩個 DWORD 分別為 `1`、`0`，並留存原值或不存在紀錄。
+- [ ] 第 3 節 Host Options 儲存後已重新查值，未混同 Disable Allow List；清單外程式開放範圍經核准，且未核准工具的執行限制已驗證。
 - [ ] `where.exe` 可找到兩個標準路徑；若有多筆，已核對明確指定的實際啟動路徑。
 - [ ] Chrome for Testing 與 ChromeDriver 為同一發布版本，保留完整版本及套件雜湊，不只比主版號。
 - [ ] 模組可於 PowerShell 7 載入，`Start-SeDriver` 存在，參數與現場套件一致。
@@ -371,6 +429,8 @@ Get-Command Start-SeDriver -Syntax
 | 錯誤或現象 | 優先判斷 | 修正方向 |
 |---|---|---|
 | `cannot find Chrome binary (SessionNotCreated)` | 實際帳號、程序 PATH、檔案存在與讀取權限 | 本案以 Machine PATH 解決；現行範例另明確指定 BinaryPath，不先改網站登入操作 |
+| Host Options 已勾選但設定未生效 | 第 2 節機碼是否存在、儲存權限及有效 GPO | 依第 3 節版本行為查實際值；不以另一個 Disable Allow List 選項替代 |
+| RemoteApp 啟動遭拒或圖形相容性異常 | 發佈別名、程式權限、第 2 節兩個 DWORD 與套用原則 | 區分允許清單與進階圖形問題，再於核准測試工作階段驗證；不直接放寬所有程式權限 |
 | WebDriver.dll 載入失敗 | PowerShell 引擎、模組路徑及原始例外 | 本案改用 PowerShell 7；不把本案結論泛化成所有 5.1 不相容 |
 | 無法辨識 `Start-SeDriver` | Import-Module 是否成功、實際帳號能否探索模組 | 修復模組安裝位置與載入，再測瀏覽器 |
 | `StartURL` 轉換失敗，`Only String attributes are supported` | `$asset` 是否有值、是否為字串與有效 URL | 本案單獨貼指令時未指定 `$asset`，補值後測試 |

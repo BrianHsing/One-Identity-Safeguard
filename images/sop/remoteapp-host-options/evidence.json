@@ -1,0 +1,29 @@
+[
+  {
+    "file": "remoteapp-registry-explanation.png",
+    "original_name": "image(10).png",
+    "library_file_id": "libfile_935a0522bab081918977c50716312554",
+    "version": 0,
+    "bytes": 137740,
+    "sha256": "771a92465ca045bd4575f51d90be690616acef4a9bfa879bbebe0b971162d5fd",
+    "transformations": []
+  },
+  {
+    "file": "remoteapp-registry-values.png",
+    "original_name": "image(20261019-180547).png",
+    "library_file_id": "libfile_f1ddb420e6408191bb1e7ab79df769af",
+    "version": 0,
+    "bytes": 114835,
+    "sha256": "1cf587b37050585ae6522d2f9d0da5d9e386ceb17fd1388d80a31e48e7c10c63",
+    "transformations": []
+  },
+  {
+    "file": "publisher-host-options.png",
+    "original_name": "image(20261019-180548).png",
+    "library_file_id": "libfile_c96e262f0dc48191b1ba495b2d20e46b",
+    "version": 0,
+    "bytes": 142347,
+    "sha256": "713b0c0f0e3ec4acb9a1fafb3ad8c6115c7a3b17cccc6384b06d7e4928e3c1e3",
+    "transformations": []
+  }
+]
