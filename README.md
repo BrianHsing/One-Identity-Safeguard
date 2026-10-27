@@ -129,3 +129,4 @@ SPP 處理申請與核准，SPS 依連線及通道原則代理工作階段。是
 - [客製化應用程式代登：RemoteApp／PowerShell Selenium](docs/kb/custom-app-login-selenium.md)（含 PS1、元件與 Git LFS 取得說明）
 
 - [Player 回放失敗與簽章、時間戳記驗證](docs/kb/sps-player-signature-timestamp.md)
+- [SPP 固定密碼重設與簽回後觸發](docs/kb/spp-fixed-password-windows.md)（[PowerShell 腳本與設定範例](examples/spp-fixed-password/README.md)）
