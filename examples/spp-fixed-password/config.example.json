@@ -1,0 +1,17 @@
+{
+  "Appliance": "<CUSTOMER_SPP_HOST>",
+  "ListenAddress": "<CUSTOMER_LISTENER_IP>",
+  "Port": 15514,
+  "AllowedSources": [
+    "<CUSTOMER_SPP_IP>"
+  ],
+  "AccountId": 0,
+  "AssetId": 0,
+  "SyncGroupId": 0,
+  "ExpectedAddress": "<CUSTOMER_TARGET_HOST>",
+  "ExpectedAccountName": "<CUSTOMER_TARGET_ACCOUNT>",
+  "CredentialFile": "spp-credential.xml",
+  "SkipCertificateCheck": false,
+  "ListenerTaskName": "SPP-FixedPassword-Listener",
+  "WorkerTaskName": "SPP-FixedPassword-Worker"
+}
