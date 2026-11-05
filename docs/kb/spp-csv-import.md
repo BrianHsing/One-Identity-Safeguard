@@ -19,6 +19,34 @@
 
 官方 7.4.1 文件將 Import Accounts 與 Import Passwords 分開，並要求先匯入帳號；介面與權限仍依現場版本確認：[Importing objects](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/7.4.1/user-guide/importing-objects)。
 
+## 操作畫面對照
+
+以下畫面擷取自 SPP **9.0.0.2807** 測試環境，介面使用中文；僅開啟匯入選單及視窗，未選取 CSV、執行匯入或修改資料。這次截圖版本不代表前述案例的版本，也不代表公開範例已通過實機匯入。圖片裁切保留操作區域，排除設備名稱、IP、登入帳號及既有資產資料。
+
+### 1. 資產匯入與下載範本
+
+前往「資產管理 → 資產」（Assets），按工具列的匯入圖示，開啟「匯入 - 資產」。先使用「下載範本」（Download Template）取得目標版本欄位，再準備資產 CSV。下圖為尚未選取檔案的畫面，空白區域不是匯入成功結果。
+
+![SPP 資產匯入視窗：匯入及下載範本按鈕](../images/spp-csv-import/assets-import.png)
+
+### 2. 帳戶與密碼使用不同入口
+
+前往「資產管理 → 帳戶」（Accounts），展開工具列的匯入選單。「匯入帳戶」（Import Accounts）與「匯入密碼」（Import Passwords）是兩個獨立功能；先建立帳戶，再匯入密碼。選單中的 SSH 金鑰匯入不在本文範圍。
+
+![SPP 帳戶工具列：匯入帳戶、匯入密碼及匯入 SSH 金鑰選單](../images/spp-csv-import/accounts-import-menu.png)
+
+選擇「匯入帳戶」後，確認視窗標題為「匯入 - 帳戶」，從此處下載帳戶範本，對照本文六欄範例。
+
+![SPP 帳戶匯入視窗及下載範本按鈕](../images/spp-csv-import/accounts-import.png)
+
+### 3. 密碼匯入
+
+帳戶建立並核對完成後，從同一選單選擇「匯入密碼」。確認視窗標題為「匯入 - 密碼」，下載此功能的範本並對照本文四欄範例。不要選用資產或帳戶範本，也不要直接匯入密碼留白的公開範例。
+
+![SPP 密碼匯入視窗及下載範本按鈕](../images/spp-csv-import/passwords-import.png)
+
+本次未執行匯入，因此不提供成功筆數或錯誤結果截圖。實際操作後仍須依下方驗證清單核對結果。
+
 ## 欄位與填寫規則
 
 ### 資產：20 欄
