@@ -97,7 +97,9 @@ if (Test-Path -LiteralPath $remoteAppPolicyKey) {
 
 ![ChromeDriver 所在 assemblies 目錄](../../examples/custom-app-login/requirements/更新driver.png)
 
-圖 4：歷史配置的 driver 位於該模組的 assemblies，不是現行獨立目錄的示範。現行配置以 `-WebDriverPath` 明確指定 `C:\Automation\chromedriver`，避免模組繼續使用內附舊版。版本相容是必要條件；還須確認真正啟動的是哪個 Chrome 執行檔。[Google 官方版本配對說明](https://developer.chrome.com/docs/chromedriver/downloads/version-selection)。來源 ZIP 的 driver 與附帶 sha256 不一致，詳見 [KB-003 的套件核對](../kb/custom-app-login-selenium.md)，不能直接以舊雜湊驗收。
+圖 4：本專案以圖中的模組目錄作為主要部署方式，將相容的 `chromedriver.exe` 放在 `C:\Program Files\PowerShell\7\Modules\selenium\assemblies`。圖中檔案總管隱藏副檔名，顯示的 chromedriver 即該執行檔。若模組另有版本子目錄，應以實際載入模組的 `ModuleBase\assemblies` 為準，不更新另一份未載入模組。下方範例以 `-WebDriverPath` 明確指向此資料夾。
+
+版本相容是必要條件；還須確認真正啟動的是哪個 Chrome 執行檔。[Google 官方版本配對說明](https://developer.chrome.com/docs/chromedriver/downloads/version-selection)。更換前備份原 driver，記錄新舊版本、來源與 SHA-256；模組更新、重裝或重新解壓縮可能覆蓋手動放入的 driver，或改變載入目錄，完成後須重新核對及測試。來源 ZIP 的 driver 與附帶 sha256 不一致，詳見 [KB-003 的套件核對](../kb/custom-app-login-selenium.md)，不能直接以舊雜湊驗收。只替換經核對的 driver，不任意覆蓋 WebDriver.dll 等模組相依檔案。
 
 將 ApexOne.ps1 放到前置表格指定路徑。先以專用測試帳戶驗證模組、網路及目標登入頁；確認可開啟頁面與找到欄位，再進行完整代登。此階段不把正式密碼寫進 PS1 或測試紀錄。
 
@@ -111,10 +113,10 @@ Google 提供的 CfT 專供測試且不自動更新，適合固定版本的自�
 
 ```text
 C:\Automation\chrome\chrome.exe
-C:\Automation\chromedriver\chromedriver.exe
+C:\Program Files\PowerShell\7\Modules\selenium\assemblies\chromedriver.exe
 ```
 
-不要放入 `C:\Program Files\Google\Chrome\Application`；獨立目錄是本專案的部署規範，避免與既有 Chrome 共用檔案。程式目錄由管理者維護，RemoteApp 帳號只授予讀取與執行，日誌另放可寫入位置。CfT 不自動更新仍須安排成套升級、回歸測試與回復版本，不能永久停留在舊版。
+Chrome 瀏覽器本體保留在 `C:\Automation\chrome`，不放入 `C:\Program Files\Google\Chrome\Application`，避免與既有 Chrome 共用檔案；ChromeDriver 則依圖 4 放入 Selenium 模組的 assemblies。程式與模組目錄由管理者維護，RemoteApp 帳號只授予讀取與執行，日誌另放可寫入位置。CfT 不自動更新仍須安排瀏覽器與 driver 成套升級、回歸測試與回復版本，不能永久停留在舊版。
 
 #### 2.2 PATH 與實際執行身分
 
@@ -123,14 +125,14 @@ PATH 填的是**包含執行檔的資料夾**，不是執行檔本身：
 | 設定 | 正確值 | 常見錯誤 |
 |---|---|---|
 | Chrome PATH | `C:\Automation\chrome` | 填成 `...\chrome.exe`，或多一層不存在的 `...\chrome\chrome` |
-| ChromeDriver PATH | `C:\Automation\chromedriver` | 填成 `...\chromedriver.exe` |
+| ChromeDriver 位置 | 實際載入模組的 `ModuleBase\assemblies`，圖 4 為 `C:\Program Files\PowerShell\7\Modules\selenium\assemblies` | 更新錯誤的模組副本，或把 `-WebDriverPath` 填成 EXE 完整路徑 |
 | 解壓縮層級 | chrome.exe 直接位於標準目錄 | 實際藏在 chrome-win64 子目錄，PATH 卻指向上層 |
 
 User PATH 僅屬於該 Windows 帳號；Machine PATH 為全機設定。程序取得的是啟動時繼承的環境，修改系統設定不會自動刷新既有 RDS 工作階段。[Microsoft 環境變數範圍與繼承](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_environment_variables)。
 
 本案 `<CUSTOMER_TEST_USER>` 的互動測試成功，RemoteApp 卻以 `<CUSTOMER_REMOTEAPP_USER>` 執行，無法使用前者的 User PATH，出現 `cannot find Chrome binary`。改用 Machine PATH 並重新取得環境後，使用者回報成功。**測試與驗收都須以實際 RemoteApp 帳號進行，不能只看管理員視窗的結果。**
 
-以下腳本適用 PowerShell 7，存為 `C:\Automation\Set-AutomationPath.ps1`，以系統管理員執行。它保留原 PATH 順序，僅補上缺少的目錄，並記錄異動前後值；Machine PATH 會影響其他帳號的新程序，先 `-WhatIf`，再 `-Confirm` 套用。
+本標準透過 `-WebDriverPath` 指定模組 assemblies，**不要求把 ChromeDriver 加入 PATH**；`-BinaryPath` 已指定瀏覽器時，也不依賴 Chrome PATH。以下僅供仍需以名稱尋找 Chrome 的既有腳本使用，適用 PowerShell 7，存為 `C:\Automation\Set-AutomationPath.ps1`，以系統管理員執行。它保留原 PATH 順序，僅補上 Chrome 瀏覽器目錄，並記錄異動前後值；Machine PATH 會影響其他帳號的新程序，先 `-WhatIf`，再 `-Confirm` 套用。
 
 ```powershell
 #requires -Version 7.0
@@ -138,9 +140,8 @@ User PATH 僅屬於該 Windows 帳號；Machine PATH 為全機設定。程序取
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact='High')]
 param()
 $ErrorActionPreference = 'Stop'
-$dirs = @('C:\Automation\chrome',
-          'C:\Automation\chromedriver')
-$files = @('chrome.exe', 'chromedriver.exe')
+$dirs = @('C:\Automation\chrome')
+$files = @('chrome.exe')
 for ($i = 0; $i -lt $dirs.Count; $i++) {
     if (-not (Test-Path (Join-Path $dirs[$i] $files[$i]))) {
         throw "Missing executable in $($dirs[$i])"
@@ -193,15 +194,19 @@ Get-Command Start-SeDriver -Syntax
 Get-Command Start-SeDriver | Select-Object Name, Version, Source
 ```
 
-以下為儲存庫既有 `selenium.zip` 的介面寫法；已核對其中 `Start-SeDriver`、`New-SeDriverService` 與 Chrome 啟動實作：`-BinaryPath` 接受瀏覽器執行檔，`-WebDriverPath` 接受 Driver **資料夾**，未指定後者時會使用模組的 assemblies。現場不同套件須先核對 `Get-Command` 結果，不能把這兩個參數當成所有 Selenium PowerShell 模組的通用介面。[已保存套件](../../examples/custom-app-login/README.md)。
+以下為儲存庫既有 `selenium.zip` 的介面寫法；已核對其中 `Start-SeDriver`、`New-SeDriverService` 與 Chrome 啟動實作：`-BinaryPath` 接受瀏覽器執行檔，`-WebDriverPath` 接受 Driver **資料夾**。Chrome 啟動函式也會讀取 `ChromeWebDriver` 環境變數；未指定有效路徑及自訂 Service 時，才回到模組的 assemblies。範例明確傳入實際命令所屬模組的 assemblies，避免環境變數或其他模組副本造成歧義。現場不同套件須先核對 `Get-Command` 結果，不能把這兩個參數當成所有 Selenium PowerShell 模組的通用介面。[已保存套件](../../examples/custom-app-login/README.md)。
 
 ```powershell
 #requires -Version 7.0
 Import-Module Selenium -RequiredVersion 4.0.0 -ErrorAction Stop
+$driverDirectory = Join-Path (Get-Command Start-SeDriver -ErrorAction Stop).Module.ModuleBase 'assemblies'
+if (-not (Test-Path -LiteralPath (Join-Path $driverDirectory 'chromedriver.exe') -PathType Leaf)) {
+    throw "Missing chromedriver.exe in $driverDirectory"
+}
 $asset = 'https://<CUSTOMER_APP_HOST>:<CUSTOMER_APP_PORT>/'
 Start-SeDriver -Browser Chrome `
     -BinaryPath 'C:\Automation\chrome\chrome.exe' `
-    -WebDriverPath 'C:\Automation\chromedriver' `
+    -WebDriverPath $driverDirectory `
     -Arguments @('--start-maximized') `
     -StartURL $asset
 ```
@@ -210,7 +215,7 @@ Start-SeDriver -Browser Chrome `
 
 本案排錯曾使用 `@('--start-maximized', '--ignore-certificate-errors')`。前者最大化視窗，後者略過憑證相關錯誤；正式設定預設只保留前者，修正憑證鏈與名稱後驗收。忽略憑證只限受控測試，不作通用正式設定。[Chromium 參數定義](https://chromium.googlesource.com/chromium/src/+/5a60c8bb002e4573dd0809f4a78d56b4c9720add/chrome/common/chrome_switches.cc)。
 
-明確指定路徑可避免同機其他 Chrome 或模組內附 Driver 被誤用；Machine PATH 則提供各帳號一致的命令搜尋環境。`where.exe` 成功只證明搜尋結果，不能代替核對 Selenium 實際使用的執行檔。[Google ChromeOptions 說明](https://developer.chrome.com/docs/chromedriver/capabilities)。
+明確指定路徑可避免同機其他 Chrome 或其他位置的 Driver 被誤用；仍須確認 `$driverDirectory` 正是已更新 driver 的模組 assemblies。`where.exe chromedriver.exe` 找不到結果不表示本標準失敗，因為 driver 不必位於 PATH；搜尋結果也不能代替核對 Selenium 實際使用的執行檔。[Google ChromeOptions 說明](https://developer.chrome.com/docs/chromedriver/capabilities)。
 
 ### 3. 在 Publisher 建立並核對發佈項目
 
@@ -275,10 +280,16 @@ try {
     }
     $stage = 'Import module'
     Import-Module Selenium -RequiredVersion 4.0.0 -ErrorAction Stop
+    $stage = 'Validate driver path'
+    $driverDirectory = Join-Path (Get-Command Start-SeDriver -ErrorAction Stop).Module.ModuleBase 'assemblies'
+    if (-not (Test-Path -LiteralPath (Join-Path $driverDirectory 'chromedriver.exe') -PathType Leaf)) {
+        throw 'Missing chromedriver.exe in module assemblies'
+    }
+    Write-Log "Driver directory: $driverDirectory"
     $stage = 'Start-SeDriver'
     Start-SeDriver -Browser Chrome `
         -BinaryPath 'C:\Automation\chrome\chrome.exe' `
-        -WebDriverPath 'C:\Automation\chromedriver' `
+        -WebDriverPath $driverDirectory `
         -Arguments @('--start-maximized') `
         -StartURL $Asset | Out-Null
     Write-Log 'Start-SeDriver completed'
@@ -402,12 +413,16 @@ RemoteApp 表單圖僅供設定參考，不能代替 Launcher／RDS 安裝與發
 ```powershell
 whoami
 where.exe chrome.exe
-where.exe chromedriver.exe
 $PSVersionTable | Select-Object PSVersion, PSEdition
 (Get-Item 'C:\Automation\chrome\chrome.exe').VersionInfo |
     Select-Object ProductVersion, FileVersion
-& 'C:\Automation\chromedriver\chromedriver.exe' --version
 Import-Module Selenium -RequiredVersion 4.0.0 -ErrorAction Stop
+$driverDirectory = Join-Path (Get-Command Start-SeDriver -ErrorAction Stop).Module.ModuleBase 'assemblies'
+$driverExe = Join-Path $driverDirectory 'chromedriver.exe'
+Get-Module Selenium | Select-Object Name, Version, ModuleBase
+Get-Item -LiteralPath $driverExe | Select-Object FullName, Length
+Get-FileHash -LiteralPath $driverExe -Algorithm SHA256
+& $driverExe --version
 Get-Command Start-SeDriver | Select-Object Name, Version, Source
 Get-Command Start-SeDriver -Syntax
 ```
@@ -415,7 +430,8 @@ Get-Command Start-SeDriver -Syntax
 - [ ] `whoami` 為核准的 `<CUSTOMER_REMOTEAPP_USER>`，不是另一個互動測試帳號。
 - [ ] 已完成第 2 節登錄備份與有效 GPO 核對；核准採本案例配置時，兩個 DWORD 分別為 `1`、`0`，並留存原值或不存在紀錄。
 - [ ] 第 3 節 Host Options 儲存後已重新查值，未混同 Disable Allow List；清單外程式開放範圍經核准，且未核准工具的執行限制已驗證。
-- [ ] `where.exe` 可找到兩個標準路徑；若有多筆，已核對明確指定的實際啟動路徑。
+- [ ] 已核對 `BinaryPath` 與實際載入模組的 `ModuleBase\assemblies\chromedriver.exe`；driver 不必出現在 PATH 搜尋結果中。
+- [ ] 模組更新、重裝或重新解壓縮後，已重新核對 driver 路徑、版本及 SHA-256，確認沒有被舊版覆蓋。
 - [ ] Chrome for Testing 與 ChromeDriver 為同一發布版本，保留完整版本及套件雜湊，不只比主版號。
 - [ ] 模組可於 PowerShell 7 載入，`Start-SeDriver` 存在，參數與現場套件一致。
 - [ ] 最小啟動測試開啟正確 URL，日誌出現 `Start-SeDriver completed`。

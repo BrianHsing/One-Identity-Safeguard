@@ -21,7 +21,7 @@
 
 此處「Selenium 4.0」指 PowerShell Gallery 的 Selenium 4.0.0-preview3 模組，不應直接推論為 Selenium .NET／Java SDK 的同版相容性聲明。[模組發佈資料](https://www.powershellgallery.com/packages/Selenium/4.0.0-preview3)明列它是預覽版本。
 
-使用者的做法是讓 Chrome Dev 與 ChromeDriver 配套。Google 官方說明：Chrome 115 起可使用 Chrome for Testing 提供的成對版本，既有非 CfT Chrome 則依版本選擇流程找相容 driver。版本相容仍不能保證網站 XPath、模組 API、TLS 或驗證流程相容。[Google 官方版本選擇](https://developer.chrome.com/docs/chromedriver/downloads/version-selection)。
+原案例使用 Chrome Dev；現行部署與 RemoteApp SOP 一致，採 Chrome for Testing（CfT）及同一發布版本的 ChromeDriver，driver 放在實際載入 Selenium 模組的 assemblies。Google 官方說明：Chrome 115 起可使用 CfT 提供的成對版本，既有非 CfT Chrome 則依版本選擇流程找相容 driver。版本相容仍不能保證網站 XPath、模組 API、TLS 或驗證流程相容。[Google 官方版本選擇](https://developer.chrome.com/docs/chromedriver/downloads/version-selection)。
 
 ### ZIP 內既有雜湊不一致
 
@@ -38,11 +38,13 @@ ZIP 中附帶的 `chromedriver.exe.sha256` 仍為 NUPKG 的雜湊，與 ZIP 實�
 
 以 PowerShell 7 x64 為網頁腳本的目標環境；先確認 RDS／RemoteApp、SPP／SPS 與應用程式啟動整合已依客戶設計完成。實際發佈及整合參考 [RemoteApp SOP](../sop/remoteapp-integration.md)。
 
-將經核准的 PowerShell 與 Chrome Dev 安裝於發佈主機，再將模組放到所有執行帳戶可讀取、PowerShell 可探索的位置。原圖使用 `C:\Program Files\PowerShell\7\Modules\selenium`；這是現場位置，不是唯一安裝路徑。
+將經核准的 PowerShell 與完整 Chrome for Testing 套件部署於發佈主機，再將模組放到所有執行帳戶可讀取、PowerShell 可探索的位置。本專案以原圖的 `C:\Program Files\PowerShell\7\Modules\selenium` 為主要配置；Chrome 本體放在 `C:\Automation\chrome`，driver 放在該模組的 assemblies。若採版本子目錄，須依實際載入的 ModuleBase 調整。
 
 ![原環境的 Selenium 模組目錄](../../examples/custom-app-login/requirements/模組.png)
 
-若使用 ZIP，解開後確認只有一層 selenium 根目錄且內含 Selenium.psd1、Selenium.psm1 與 assemblies，不可再套一層 selenium。依選定的 Chrome 版本準備相容 ChromeDriver，先備份再替換實際載入模組的 assemblies 內檔案，留下前後版本及雜湊。
+若使用 ZIP，解開後確認只有一層 selenium 根目錄且內含 Selenium.psd1、Selenium.psm1 與 assemblies，不可再套一層 selenium。依選定的 Chrome 版本準備相容 ChromeDriver，先備份再替換實際載入模組的 `assemblies\chromedriver.exe`，留下前後版本、原廠來源及 SHA-256。圖中完整路徑為 `C:\Program Files\PowerShell\7\Modules\selenium\assemblies\chromedriver.exe`；檔案總管隱藏 EXE 副檔名，顯示為 chromedriver。
+
+模組更新、重裝或重新解壓縮可能覆蓋手動放入的 driver，或改變實際載入目錄。每次完成後重新核對 ModuleBase、driver 版本與雜湊，再用實際 RemoteApp 帳戶回歸測試；失敗時依紀錄回復相容的瀏覽器與 driver 組合。不要只改另一份未載入模組，也不要用舊 sha256 sidecar 驗收新檔案。只替換 driver，不任意覆蓋模組的 WebDriver.dll 等相依檔案。
 
 ![原環境的 assemblies 與 ChromeDriver 位置](../../examples/custom-app-login/requirements/更新driver.png)
 
@@ -54,7 +56,39 @@ Get-Module -ListAvailable Selenium |
 $env:PSModulePath -split [IO.Path]::PathSeparator
 ```
 
-原始網頁 PS1 只指定 `-Browser chrome`，沒有明確指定 Chrome Dev 執行檔；同機有 Stable／Dev 多版本時，要在受控測試核對實際啟動的執行檔與版本。不能因安裝了 Dev 就假設 Selenium 一定選到它。
+原始網頁 PS1 只指定 `-Browser chrome`，沒有明確指定瀏覽器或 driver 路徑，仍保留原檔供追溯。部署副本應採以下寫法，與 SOP 圖 4 一致；不要因安裝了某個 Chrome 就假設 Selenium 一定選到它。
+
+### 明確指定模組 assemblies
+
+已核對保存的 PowerShell Selenium 4.0.0-preview3（ModuleVersion 4.0.0）：`-BinaryPath` 接受瀏覽器 EXE，`-WebDriverPath` 接受 driver **資料夾**。Chrome 啟動函式會讀取 `ChromeWebDriver` 環境變數，未指定有效路徑及自訂 Service 時才回到模組 assemblies，因此範例明確傳入該資料夾，不要求將 driver 加入 PATH。不同模組版本先核對參數及實作。
+
+```powershell
+#requires -Version 7.0
+Import-Module Selenium -RequiredVersion 4.0.0 -ErrorAction Stop
+$driverDirectory = Join-Path (Get-Command Start-SeDriver -ErrorAction Stop).Module.ModuleBase 'assemblies'
+$driverExe = Join-Path $driverDirectory 'chromedriver.exe'
+if (-not (Test-Path -LiteralPath $driverExe -PathType Leaf)) {
+    throw "Missing chromedriver.exe in $driverDirectory"
+}
+Get-Module Selenium | Select-Object Name, Version, ModuleBase
+Get-FileHash -LiteralPath $driverExe -Algorithm SHA256
+& $driverExe --version
+(Get-Item 'C:\Automation\chrome\chrome.exe').VersionInfo |
+    Select-Object ProductVersion, FileVersion
+```
+
+先確認上述路徑、版本及雜湊，再於核准測試中執行下列啟動範例；此步會啟動瀏覽器，不是唯讀查詢。完整 URL 需換成測試目標，原 PS1 的 asset 格式仍依下節處理。
+
+```powershell
+# 在上方已載入模組並設定 $driverDirectory 的同一工作階段執行
+Start-SeDriver -Browser Chrome `
+    -BinaryPath 'C:\Automation\chrome\chrome.exe' `
+    -WebDriverPath $driverDirectory `
+    -Arguments @('--start-maximized') `
+    -StartURL 'https://<CUSTOMER_APP_HOST>:<CUSTOMER_APP_PORT>/'
+```
+
+若同時安裝多份同版本模組，先核對 `Get-Command Start-SeDriver` 所屬模組與 ModuleBase；選錯副本時，於新的 PowerShell 工作階段以核准的 Selenium.psd1 完整路徑載入，再重做檢查。僅有 `RequiredVersion 4.0.0` 無法識別來源套件或 preview 標籤。
 
 ## 放置 PS1 與設定發佈項目
 
