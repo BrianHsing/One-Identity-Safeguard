@@ -60,7 +60,7 @@ Name,Asset/Name,Asset/AssetPartitionName,Password
 
 保留範本欄名的斜線 `/`，不要自行改成點號、翻譯或重新排序。官方 7.4 說明欄序可變、欄名必須符合屬性名稱；本 KB 為方便比對，仍保留提供範本的順序：[Creating an import file](https://support.oneidentity.com/technical-documents/one-identity-safeguard-for-privileged-passwords/7.4/user-guide/creating-an-import-file)。
 
-使用逗號分隔 CSV；含逗號、雙引號或換行的值交由標準 CSV 寫入器正確引號處理。試算表另存後重新解析確認，避免另存成分號分隔、刪除尾端空欄、改變文字值或增加列號。pandas 輸出時使用 `index=False`；Excel 左側列號及預覽的 `index` 都不是匯入欄位。名稱欄避免前後空白，不可任意修剪密碼內容。本例採 UTF-8 BOM 與 CRLF，目標版本的編碼支援仍須以小批次驗證。
+使用逗號分隔 CSV；含逗號、雙引號或換行的值交由標準 CSV 寫入器正確引號處理。試算表另存後重新解析確認，避免另存成分號分隔、刪除尾端空欄、改變文字值或增加列號。pandas 輸出時使用 `index=False`；Excel 左側列號及預覽的 `index` 都不是匯入欄位。名稱欄避免前後空白，不可任意修剪密碼內容。GitHub 儲存的三份 CSV 採 UTF-8 BOM 與 LF；Windows checkout 可能依 Git 設定轉為 CRLF（例如 `core.autocrlf=true`）。請檢查實際匯入檔，目標版本的編碼與換行支援仍須以小批次驗證。
 
 ## 本次排錯紀錄
 
