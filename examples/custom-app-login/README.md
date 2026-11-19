@@ -1,12 +1,12 @@
 # 客製化應用程式代登範例
 
-本目錄保存使用者提供的 16 支 PowerShell 腳本與 6 個 requirement 檔案。來源檔案原樣納入，沒有改動登入邏輯；不是經本次環境驗收的通用部署套件。
+本目錄保存使用者提供的 PowerShell 代登腳本與 6 個 requirement 檔案。除了 `MSSQL.ps1`（已換成改良版）與新增的 `SPS.ps1` 兩支經實測的改良版之外，其餘來源檔案原樣納入，沒有改動登入邏輯，也不是經驗收的通用部署套件。
 
-完整操作說明見 [KB-003：RemoteApp 搭配 PowerShell Selenium 客製化代登](../../docs/kb/custom-app-login-selenium.md)。
+部署步驟見 [RemoteApp 整合 SOP](../../docs/sop/remoteapp-integration.md)；各腳本的 asset 格式、限制與排錯案例見 [KB-003：客製化應用程式代登腳本參考](../../docs/kb/custom-app-login-selenium.md)。
 
-- `scripts/`：15 支 Selenium 網頁代登腳本及 1 支 MSSQL／SSMS UI 自動化腳本。
+- `scripts/`：16 支 Selenium 網頁代登腳本（含改良版 `SPS.ps1`）及 1 支 MSSQL／SSMS UI 自動化腳本（改良版 `MSSQL.ps1`）。
 - `requirements/`：PowerShell MSI、Selenium NUPKG／ZIP、兩張配置圖及原始呼叫文字。
-- [manifest.json](manifest.json)：23 個原始檔案的大小及 SHA-256，包含發佈畫面，可核對來源與下載完整性。
+- [manifest.json](manifest.json)：23 個原始檔案的大小及 SHA-256，包含發佈畫面，可核對來源與下載完整性。`MSSQL.ps1` 已換成改良版，與 manifest 不符；原始版本可由 `git show 1b986d8:examples/custom-app-login/scripts/MSSQL.ps1` 取得。
 
 ## 取得完整安裝元件
 
@@ -16,7 +16,7 @@ PowerShell 7.4.6 與 Selenium 4.0.0-preview3 是來源環境留存版本，不�
 
 ## 現行瀏覽器與 driver 放置方式
 
-依 [RemoteApp SOP 圖 4](../../docs/sop/remoteapp-integration.md)與 [KB-003](../../docs/kb/custom-app-login-selenium.md)，主要配置如下：
+依 [RemoteApp SOP 步驟 2](../../docs/sop/remoteapp-integration.md#步驟-2部署-powershell-7selenium-與-chrome-for-testing)，主要配置如下：
 
 ```text
 C:\Automation\chrome\chrome.exe
@@ -31,4 +31,4 @@ Chrome 使用完整 Chrome for Testing 套件，ChromeDriver 採同一發布版�
 
 多數網頁腳本會以命令列接收密碼、略過 TLS 憑證錯誤，並在結尾執行 `taskkill /f /im chromedriver.exe`。這可能影響同主機其他代登工作，不能直接當成共用發佈主機的安全完成範本。不要用真實密碼測試命令列或啟用未確認遮罩行為的 debug／Transcript。
 
-`PVE.ps1` 使用動態 ID 與疑似拼字錯誤 `[namr=realm]`，另有獨立的 `pve_auth1.ps1`；兩者均保留，不宣稱新版已完全驗收。`MSSQL.ps1` 採 Windows UI Automation，與 Selenium 分開；`-ResetProfile` 會刪除使用者的 SqlStudio.bin，且原檔沒有 SupportsShouldProcess。原始腳本不具一致的 WhatIf／稽核機制，正式部署前須另行完成修改與驗收。
+`PVE.ps1` 使用動態 ID 與疑似拼字錯誤 `[namr=realm]`，另有獨立的 `pve_auth1.ps1`；兩者均保留，不宣稱新版已完全驗收。`MSSQL.ps1` 採 Windows UI Automation，與 Selenium 分開；`-ResetProfile` 會刪除該帳戶 SSMS 19.x／20.x 的 `UserSettings.xml` 與 `SqlStudio.bin`。`SPS.ps1` 只結束自己啟動的 chromedriver。其他原始腳本不具一致的 WhatIf／稽核機制，正式部署前須另行完成修改與驗收。

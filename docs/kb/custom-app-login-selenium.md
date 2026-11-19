@@ -1,152 +1,145 @@
-# KB-003：RemoteApp 搭配 PowerShell Selenium 客製化應用程式代登
+# KB-003：客製化應用程式代登腳本參考
 
-## 方法與證據來源
+本篇是 RemoteApp 代登的**參考資料**：保存的套件與版本、各腳本的 asset 格式與限制、改良版腳本的做法，以及過去的排錯案例。
 
-本篇整理使用者既有做法：透過 Safeguard 的應用程式工作階段，在應用程式發佈主機啟動 PowerShell，帶入帳號、密碼與資產位址，再由 Selenium 開啟瀏覽器、填寫登入表單。發佈主機的套件與 16 支 PS1 已保存於 [代登範例目錄](../../examples/custom-app-login/README.md)。本次只讀取、盤點及做語法檢查，沒有安裝元件或操作客戶系統。
+> [!NOTE]
+> 部署與設定步驟請照 [RemoteApp 整合 SOP](../sop/remoteapp-integration.md) 操作，本篇不重複步驟。
 
-![使用者提供的 Remote Application Publisher 設定](../../images/kb/custom-app-login/remote-application-publisher.png)
+## 快速查找
 
-原圖標題為 Remote Application Publisher 1.0.3.48455，顯示 11 筆已發佈項目；它證明設定方式，不代表每筆皆登入成功。Fortigate／FortigateSW 的右側命令列遭畫面裁切，不能據此重建完整字串。圖中 `{username}`、`{password}` 是原設定的替代欄位，不是實際帳密。
+| 想知道 | 看哪裡 |
+|---|---|
+| 某支腳本的 `-asset` 要填什麼格式 | [腳本清單](#腳本清單) |
+| 原始腳本有哪些風險、改良版怎麼處理 | [原始腳本的限制與改良版做法](#原始腳本的限制與改良版做法) |
+| 遇到的錯誤以前有沒有發生過 | [案例紀錄](#案例紀錄) |
+| 保存的套件版本、driver 雜湊為何對不上 | [保存的套件與版本](#保存的套件與版本) |
+| 怎麼部署 Chrome for Testing 與 ChromeDriver | [SOP 步驟 2](../sop/remoteapp-integration.md#步驟-2部署-powershell-7selenium-與-chrome-for-testing) |
+| Publisher 命令列怎麼寫 | [SOP 步驟 4](../sop/remoteapp-integration.md#步驟-4在-publisher-建立發佈項目) |
 
-## 套件與版本
+## 腳本清單
 
-| 元件 | 本次保存內容 | 判讀 |
+腳本放在 [代登範例目錄](../../examples/custom-app-login/README.md)。「Publisher 畫面」指 [SOP 圖 6](../sop/remoteapp-integration.md#42-建立發佈項目) 的發佈清單中是否有該項目。
+
+> [!TIP]
+> 大多數網頁腳本會自行補 `https://`，所以 `-asset` 填主機名稱、IP 或 `host:port`，**不要加 scheme**。例外見下表的「asset 格式」欄。
+
+| 腳本 | 類型 | Publisher 畫面 | asset 格式 | 定位方式與備註 |
+|---|---|---|---|---|
+| [MSSQL.ps1](../../examples/custom-app-login/scripts/MSSQL.ps1) | SSMS 20（UI Automation） | 無 | `host`、`host,port` 或 `host\instance` | **改良版，已實測**。SSMS 20.x 繁體中文介面；固定使用 SQL Server 驗證 |
+| [SPS.ps1](../../examples/custom-app-login/scripts/SPS.ps1) | 網頁（Selenium） | — | 主機或 `host:port`；已含 scheme 時不重複補 | **改良版，已實測**。`local-username`／`local-password`、class `flat primary` |
+| [ApexOne.ps1](../../examples/custom-app-login/scripts/ApexOne.ps1) | 網頁 HTTPS | 有 | 主機 | `labelUsername`／`labelPassword` |
+| [ArubaVC.ps1](../../examples/custom-app-login/scripts/ArubaVC.ps1) | 網頁 HTTPS | 有 | 主機 | `login-username`／`login-password` |
+| [Dell.ps1](../../examples/custom-app-login/scripts/Dell.ps1) | 網頁 HTTPS | 有 | 主機 | iDRAC 絕對 XPath，介面改版需重測 |
+| [DrIP.ps1](../../examples/custom-app-login/scripts/DrIP.ps1) | 網頁 **HTTP** | 有 | 主機 | `USER_TB`／`PWD_TB` |
+| [Fortigate.ps1](../../examples/custom-app-login/scripts/Fortigate.ps1) | 網頁 HTTPS | 有 | 主機 | `username`／`secretkey` |
+| [FortigateSW.ps1](../../examples/custom-app-login/scripts/FortigateSW.ps1) | 網頁 HTTPS | 有 | 主機 | `username`／`password` |
+| [HPESW.ps1](../../examples/custom-app-login/scripts/HPESW.ps1) | 網頁 HTTPS | 有 | 主機 | `inputUsername`／`inputPassword` |
+| [Nessus.ps1](../../examples/custom-app-login/scripts/Nessus.ps1) | 網頁 HTTPS | 有 | 主機（**不要**加埠） | 腳本自動加 `:8834` |
+| [NReporter.ps1](../../examples/custom-app-login/scripts/NReporter.ps1) | 網頁 HTTPS | 有 | 主機 | `username`／`password` |
+| [PVE.ps1](../../examples/custom-app-login/scripts/PVE.ps1) | 網頁 HTTPS | 有 | 主機 | 動態元素 ID；password 指向 inputWrap；realm 選取器含疑似拼字錯誤 `namr` |
+| [Synology.ps1](../../examples/custom-app-login/scripts/Synology.ps1) | 網頁 **HTTP** | 有 | 主機 | 分兩階段輸入帳號與密碼 |
+| [Netapp.ps1](../../examples/custom-app-login/scripts/Netapp.ps1) | 網頁 HTTPS | 無 | 主機 | XPath 與 CSS Selector |
+| [Paloalto.ps1](../../examples/custom-app-login/scripts/Paloalto.ps1) | 網頁 HTTPS | 無 | 主機 | `user`／`passwd` |
+| [Peplink.ps1](../../examples/custom-app-login/scripts/Peplink.ps1) | 網頁 HTTPS | 無 | 主機 | Name 與 Class 選取 |
+| [pve_auth1.ps1](../../examples/custom-app-login/scripts/pve_auth1.ps1) | 網頁 HTTPS | 無 | 主機或完整 URL | 未含 scheme 時補 `https://`，但**不會**補 `:8006`；可指定 realm、使用 Timeout；成功檢查被註解 |
+
+除了標示「改良版，已實測」的兩支，其餘都是原樣保存的來源腳本，沒有測試紀錄，維持「來源範例」狀態。
+
+## 原始腳本的限制與改良版做法
+
+| 限制 | 影響 | 改良版的做法 |
 |---|---|---|
-| PowerShell | `PowerShell-7.4.6-win-x64.msi` | 來源環境的 x64 安裝檔，不是要求新環境固定使用舊修補版 |
-| PowerShell Selenium 模組 | `selenium.4.0.0-preview3.nupkg` | nuspec 為 4.0.0-preview3；psd1 ModuleVersion 為 4.0.0、Prerelease 為 preview3 |
-| 已整理的模組資料夾 | `selenium.zip` | 包含 selenium 根目錄與 assemblies；ChromeDriver 與 NUPKG 內版本不同 |
-| Google Chrome Dev | 使用者說明為現場瀏覽器 | 本次來源沒有瀏覽器安裝檔，也沒有完整版本證據 |
-| ChromeDriver | 兩個 Selenium 套件均內含 | 不可因 ZIP 名稱相似而視為同一個 driver |
-| 配置參考 | `模組.png`、`更新driver.png`、`pwsh.txt` | 保留原始資料；文字檔的 debug 參數不作預設建議 |
+| 結尾執行 `taskkill /f /im chromedriver.exe` | 結束主機上**所有人**的 chromedriver | SPS.ps1 只結束父程序為自己的 chromedriver |
+| 未指定 Chrome 與 driver 路徑，只寫 `-Browser chrome` | 可能用到其他版本的 Chrome 或 driver | SPS.ps1 以 `-BinaryPath`、`-WebDriverPath` 明確指定，找不到時記錄警告 |
+| 固定 `Start-Sleep` 等待 | 頁面較慢時找不到欄位 | SPS.ps1 每 0.5 秒檢查一次，最多等 `-TimeoutSec` 秒 |
+| 按下登入後不確認結果 | 失敗時無從得知 | SPS.ps1 確認是否離開登入頁；MSSQL.ps1 判斷連線成功或錯誤並記錄錯誤內容 |
+| 沒有日誌 | RemoteApp 沒有主控台，失敗時無法判斷停在哪一步 | 兩支都寫階段日誌，不記錄密碼 |
+| `ignore-certificate-errors` 略過憑證；DrIP、Synology 使用 HTTP | 失去中間人防護 | SPS.ps1 預設仍略過，可用 `-VerifyCertificate` 恢復；正式環境應配置可信任的 HTTPS |
+| 密碼經命令列傳入 | 有權讀取程序資訊的人可能看到；特殊字元可能被拆錯 | Launcher 的設計限制，無法由腳本解決；以測試密碼驗證特殊字元 |
+| 沒有 `#requires -Version 7.0` | 誤用 Windows PowerShell 5.1 時 Selenium 可能載入失敗 | SPS.ps1 加上 `#requires -Version 7.0` |
 
-此處「Selenium 4.0」指 PowerShell Gallery 的 Selenium 4.0.0-preview3 模組，不應直接推論為 Selenium .NET／Java SDK 的同版相容性聲明。[模組發佈資料](https://www.powershellgallery.com/packages/Selenium/4.0.0-preview3)明列它是預覽版本。
+MSSQL.ps1 的其他設計重點：
 
-原案例使用 Chrome Dev；現行部署與 RemoteApp SOP 一致，採 Chrome for Testing（CfT）及同一發布版本的 ChromeDriver，driver 放在實際載入 Selenium 模組的 assemblies。Google 官方說明：Chrome 115 起可使用 CfT 提供的成對版本，既有非 CfT Chrome 則依版本選擇流程找相容 driver。版本相容仍不能保證網站 XPath、模組 API、TLS 或驗證流程相容。[Google 官方版本選擇](https://developer.chrome.com/docs/chromedriver/downloads/version-selection)。
+- 先把驗證方式切到「SQL Server 驗證」，並等登入欄位真的啟用後才填值。
+- 「信任伺服器憑證」先嘗試以 UI Automation 讀取狀態；在 SSMS 20.2.37.0 讀不到，所以退回切換。因此 `-TrustServerCertificate` 必須搭配 `-ResetProfile`（見 [SOP 範例一](../sop/remoteapp-integration.md#範例一mssqlssms-20桌面程式)）。
+- 只有錯誤內容判定為憑證錯誤時，才改用第二種切換方式重試一次。
+- `-ResetProfile` 刪除的是 SSMS 19.x／20.x 的 `UserSettings.xml` 與 `SqlStudio.bin`，也會清掉該帳戶的伺服器連線紀錄與偏好設定。
 
-### ZIP 內既有雜湊不一致
+## 案例紀錄
 
-本次直接計算壓縮檔內的 ChromeDriver 位元組，未執行該 EXE：
+### 2026-11-19：MSSQL（SSMS）RemoteApp 代登
+
+環境：SSMS 20.2.37.0、PowerShell 7.4.6，RemoteApp 執行帳戶 `sg_svc`，目標 SQL Server 10.16.10.103。最終以 SQL 驗證（`sa`）代登成功。
+
+| 現象 | 原因 | 處理 |
+|---|---|---|
+| RemoteApp 錯誤：「無法打開此程式或檔案。若不是 \|\|SSMS 有問題…」 | SPP 原則的別名 `\|\|SSMS` 與 Publisher 的項目名稱 `MSSQL` 不一致 | 原則改為 `\|\|MSSQL` |
+| 修正別名後仍出現同樣錯誤 | Launcher 命令列約 300 字元。縮短到約 165 字元即恢復；之後 203 字元也成功。未逐一還原參數，無法確定是長度上限或特定參數 | 只傳必要參數 |
+| SSMS 出現 `error: 40 - Could not open a connection to SQL Server` | 網路層連不到 SQL Server（15:35–15:58）。16:00 起恢復，期間的伺服器端變更未記錄 | 屬伺服器或網路設定，非腳本問題 |
+| 腳本把網路錯誤誤判為憑證錯誤並重試 | 錯誤方塊與登入對話框同名，且掛在登入對話框底下；舊版抓到外層對話框，讀到「憑證中的主機名稱」標籤 | 已修正（commit `64852c9`）：排除含「連線(C)」按鈕的登入對話框 |
+| 不加 `-TrustServerCertificate` 也能登入 | SSMS 記住了先前執行時的勾選。加上 `-ResetProfile` 回到未勾選後，出現 `SSL Provider` 的「此憑證鏈結是由不受信任的授權單位發出的」 | 正式命令列使用 `-TrustServerCertificate -ResetProfile` |
+| 日誌顯示「信任伺服器憑證初始狀態：無法讀取」 | SSMS 20.2.37.0 的勾選框不支援 UI Automation 的 TogglePattern | 腳本退回切換，需搭配 `-ResetProfile` |
+| 目標帳戶 `Administrator@yjcloud.org` 無法登入 | 疑似 AD 網域帳戶；SQL Server 驗證只接受 SQL 登入（該次同時有網路錯誤，未單獨確認） | 改用 SQL 登入 `sa` |
+
+同一發佈主機的觀察：未安裝 RD 工作階段主機角色（`RDS-RD-Server` 為 Available）、Windows 尚未啟用（事件 8198，slui `0x87E10BC6`），RemoteApp 仍可啟動。這不符合正式授權要求。
+
+### 2026-11-19：SPS 改良版腳本
+
+以改良版 SPS.ps1 登入 SPS 管理網頁成功：Chrome for Testing 與 ChromeDriver 同為 155.0.8059.79，driver 啟動後 1 秒內出現登入欄位，按下登入 1 秒內離開登入頁，只結束了本次啟動的 chromedriver。該次執行帳號為 `Administrator`。
+
+### 2026-10-07：`cannot find Chrome binary`
+
+`<CUSTOMER_TEST_USER>` 互動測試成功，但 RemoteApp 以 `<CUSTOMER_REMOTEAPP_USER>` 執行，讀不到前者的 User PATH，約 3 秒後在建立 WebDriver 工作階段時出現 `cannot find Chrome binary (SessionNotCreated)`。改用 Machine PATH 並重建工作階段後，使用者回報成功。現行做法改以 `-BinaryPath` 明確指定 Chrome。
+
+**教訓：測試與驗收都要用 RemoteApp 實際執行帳戶。**
+
+### PowerShell 5.1 載入 WebDriver.dll 失敗
+
+同一套 Selenium 模組在 Windows PowerShell 5.1 載入 WebDriver.dll 失敗，在 PowerShell 7 成功（日誌記錄 PowerShell 7.4.17，Selenium 顯示 4.0.0）。這是本案觀察，不代表所有 Selenium 套件都不支援 5.1。`#requires -Version 7.0` 只限制最低版本，不會自動改用 PowerShell 7，Launcher 必須明確呼叫 `pwsh.exe`（[Requires 說明](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_requires?view=powershell-7.4)）。
+
+### StartURL：`Only String attributes are supported`
+
+單獨貼上 `Start-SeDriver` 測試時，`$asset` 沒有在同一工作階段指定，傳入空值造成轉換失敗。補上完整 URL 後正常。
+
+### Chrome Dev 的版本漂移（歷史背景）
+
+原案例使用 Chrome Dev。Chrome Dev 與一般 Chrome 會自動更新，自動化環境的版本因此改變；把測試檔案放進既有 Chrome 安裝目錄，也會讓安裝與更新互相干擾。曾遇到更新或覆蓋問題，但沒有完整的更新程序證據。現行標準改用不會自動更新的 Chrome for Testing。
+
+## 保存的套件與版本
+
+| 元件 | 保存內容 | 說明 |
+|---|---|---|
+| PowerShell | `PowerShell-7.4.6-win-x64.msi` | 來源環境的安裝檔，不是要求新環境固定使用此版本 |
+| Selenium 模組 | `selenium.4.0.0-preview3.nupkg` | nuspec 為 4.0.0-preview3；psd1 的 ModuleVersion 為 4.0.0、Prerelease 為 preview3 |
+| 已整理的模組資料夾 | `selenium.zip` | 含 selenium 根目錄與 assemblies；內含的 ChromeDriver 與 NUPKG 不同 |
+| Chrome Dev | 無安裝檔 | 只有使用者說明，沒有完整版本證據 |
+| 配置參考 | `模組.png`、`更新driver.png`、`pwsh.txt` | 保留原始資料；`pwsh.txt` 的 `--enable-debug` 不作預設建議 |
+
+「Selenium 4.0」指 PowerShell Gallery 的 [Selenium 4.0.0-preview3 模組](https://www.powershellgallery.com/packages/Selenium/4.0.0-preview3)（預覽版），不是 Selenium .NET／Java SDK 的相容性聲明。`Get-Module` 只顯示 4.0.0，無法分辨 preview 標籤，部署時須保存套件來源與雜湊。
+
+### ZIP 內的 driver 雜湊對不上
+
+直接計算壓縮檔內 `chromedriver.exe` 的位元組（未執行該檔案）：
 
 | 套件 | chromedriver.exe SHA-256 |
 |---|---|
 | NUPKG | `c6131a3106a8956702459673bdcc7f37bdd8989a141d2cbe15dc0157f0d53c74` |
 | ZIP | `ba21fb58c0be6963b7dba8efdfa8b772b014b2fa3c455f6328101f2ae883859a` |
 
-ZIP 中附帶的 `chromedriver.exe.sha256` 仍為 NUPKG 的雜湊，與 ZIP 實際 driver 不符。這與曾更換 driver 的操作相容，但不是來源可信度驗證；部署前另核對原廠來源、實際版本及檔案雜湊，不直接採信舊 sidecar。兩個來源套件原樣保存，不覆寫成相同內容。
+ZIP 附帶的 `chromedriver.exe.sha256` 仍是 NUPKG 的雜湊，與 ZIP 內實際的 driver 不符。這符合「曾手動更換 driver」的情況，但不能當作來源可信的證明。部署前另行核對原廠來源、實際版本與雜湊，不要採信舊的 `.sha256` 附檔。兩個套件都原樣保存。
 
-## 發佈主機準備
+## 每個發佈項目應保存的紀錄
 
-以 PowerShell 7 x64 為網頁腳本的目標環境；先確認 RDS／RemoteApp、SPP／SPS 與應用程式啟動整合已依客戶設計完成。實際發佈及整合參考 [RemoteApp SOP](../sop/remoteapp-integration.md)。
+- PowerShell、Selenium 模組、瀏覽器的實際路徑與版本，ChromeDriver 版本與 SHA-256。
+- 目標系統版本、asset 格式、預期的登入頁。
+- 以專用測試帳戶確認：正確主機與身分、失敗訊息、登出與歸還、SPS 側錄對應，以及兩個工作階段同時使用是否互相影響。
 
-將經核准的 PowerShell 與完整 Chrome for Testing 套件部署於發佈主機，再將模組放到所有執行帳戶可讀取、PowerShell 可探索的位置。本專案以原圖的 `C:\Program Files\PowerShell\7\Modules\selenium` 為主要配置；Chrome 本體放在 `C:\Automation\chrome`，driver 放在該模組的 assemblies。若採版本子目錄，須依實際載入的 ModuleBase 調整。
+沒有測試紀錄的項目維持「來源範例」，不標成驗收通過。
 
-![原環境的 Selenium 模組目錄](../../examples/custom-app-login/requirements/模組.png)
+## 取得檔案
 
-若使用 ZIP，解開後確認只有一層 selenium 根目錄且內含 Selenium.psd1、Selenium.psm1 與 assemblies，不可再套一層 selenium。依選定的 Chrome 版本準備相容 ChromeDriver，先備份再替換實際載入模組的 `assemblies\chromedriver.exe`，留下前後版本、原廠來源及 SHA-256。圖中完整路徑為 `C:\Program Files\PowerShell\7\Modules\selenium\assemblies\chromedriver.exe`；檔案總管隱藏 EXE 副檔名，顯示為 chromedriver。
-
-模組更新、重裝或重新解壓縮可能覆蓋手動放入的 driver，或改變實際載入目錄。每次完成後重新核對 ModuleBase、driver 版本與雜湊，再用實際 RemoteApp 帳戶回歸測試；失敗時依紀錄回復相容的瀏覽器與 driver 組合。不要只改另一份未載入模組，也不要用舊 sha256 sidecar 驗收新檔案。只替換 driver，不任意覆蓋模組的 WebDriver.dll 等相依檔案。
-
-![原環境的 assemblies 與 ChromeDriver 位置](../../examples/custom-app-login/requirements/更新driver.png)
-
-使用與 RemoteApp 相同的執行帳戶，在 PowerShell 7 查驗模組是否可讀取。以下僅查詢已安裝模組資訊，不安裝或啟動瀏覽器：
-
-```powershell
-Get-Module -ListAvailable Selenium |
-    Select-Object Name, Version, ModuleBase
-$env:PSModulePath -split [IO.Path]::PathSeparator
-```
-
-原始網頁 PS1 只指定 `-Browser chrome`，沒有明確指定瀏覽器或 driver 路徑，仍保留原檔供追溯。部署副本應採以下寫法，與 SOP 圖 4 一致；不要因安裝了某個 Chrome 就假設 Selenium 一定選到它。
-
-### 明確指定模組 assemblies
-
-已核對保存的 PowerShell Selenium 4.0.0-preview3（ModuleVersion 4.0.0）：`-BinaryPath` 接受瀏覽器 EXE，`-WebDriverPath` 接受 driver **資料夾**。Chrome 啟動函式會讀取 `ChromeWebDriver` 環境變數，未指定有效路徑及自訂 Service 時才回到模組 assemblies，因此範例明確傳入該資料夾，不要求將 driver 加入 PATH。不同模組版本先核對參數及實作。
-
-```powershell
-#requires -Version 7.0
-Import-Module Selenium -RequiredVersion 4.0.0 -ErrorAction Stop
-$driverDirectory = Join-Path (Get-Command Start-SeDriver -ErrorAction Stop).Module.ModuleBase 'assemblies'
-$driverExe = Join-Path $driverDirectory 'chromedriver.exe'
-if (-not (Test-Path -LiteralPath $driverExe -PathType Leaf)) {
-    throw "Missing chromedriver.exe in $driverDirectory"
-}
-Get-Module Selenium | Select-Object Name, Version, ModuleBase
-Get-FileHash -LiteralPath $driverExe -Algorithm SHA256
-& $driverExe --version
-(Get-Item 'C:\Automation\chrome\chrome.exe').VersionInfo |
-    Select-Object ProductVersion, FileVersion
-```
-
-先確認上述路徑、版本及雜湊，再於核准測試中執行下列啟動範例；此步會啟動瀏覽器，不是唯讀查詢。完整 URL 需換成測試目標，原 PS1 的 asset 格式仍依下節處理。
-
-```powershell
-# 在上方已載入模組並設定 $driverDirectory 的同一工作階段執行
-Start-SeDriver -Browser Chrome `
-    -BinaryPath 'C:\Automation\chrome\chrome.exe' `
-    -WebDriverPath $driverDirectory `
-    -Arguments @('--start-maximized') `
-    -StartURL 'https://<CUSTOMER_APP_HOST>:<CUSTOMER_APP_PORT>/'
-```
-
-若同時安裝多份同版本模組，先核對 `Get-Command Start-SeDriver` 所屬模組與 ModuleBase；選錯副本時，於新的 PowerShell 工作階段以核准的 Selenium.psd1 完整路徑載入，再重做檢查。僅有 `RequiredVersion 4.0.0` 無法識別來源套件或 preview 標籤。
-
-## 放置 PS1 與設定發佈項目
-
-原圖採 `C:\custom\<應用程式>\<應用程式>.ps1`。例如將原始 ApexOne.ps1 放到 `C:\custom\ApexOne\ApexOne.ps1`；由管理者控制目錄寫入權限，工作階段帳戶只取得必要讀取／執行權限。
-
-截圖中的 ApexOne 設定如下；這是 Remote Application Publisher 的欄位內容，不是直接貼到 PowerShell 主控台執行的命令：
-
-| 欄位 | 原圖內容 |
-|---|---|
-| Name／Full Name | ApexOne |
-| Program Path | `\|\|ApexOne` |
-| Command Line | 見下方 |
-
-```text
---cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args "-File C:\custom\ApexOne\ApexOne.ps1 -username {username} -password {password} -asset {asset}"
-```
-
-原始 `pwsh.txt` 另採 `-asset {Target.AssetNetworkAddress}`，並帶有 `--enable-debug`。兩種 asset 替代欄位的適用設定不能只由截圖確認；依實際 SPP／Launcher 設定選擇，驗收時核對帶入值確為目標資產，不在正式記錄輸出密碼。本文範例省略 debug，避免未確認記錄遮罩前留下敏感資料。
-
-大多數腳本自行加上 https://，因此 asset 預期為主機名稱、IP 或需要的 host:port，不含 scheme；Nessus 會自行加入 8834。`pve_auth1.ps1` 可接收 URL，未含 scheme 時補 https://，但不自動補 8006。各腳本不可一律套用同樣 asset 格式。
-
-## 腳本對照
-
-| 原始腳本 | 截圖中有發佈項目 | 原始實作與限制 |
-|---|---|---|
-| [ApexOne.ps1](../../examples/custom-app-login/scripts/ApexOne.ps1) | 有 | HTTPS，labelUsername／labelPassword |
-| [ArubaVC.ps1](../../examples/custom-app-login/scripts/ArubaVC.ps1) | 有 | HTTPS，login-username／login-password |
-| [Dell.ps1](../../examples/custom-app-login/scripts/Dell.ps1) | 有 | HTTPS，iDRAC 絕對 XPath，UI 改版需重測 |
-| [DrIP.ps1](../../examples/custom-app-login/scripts/DrIP.ps1) | 有 | HTTP，USER_TB／PWD_TB |
-| [Fortigate.ps1](../../examples/custom-app-login/scripts/Fortigate.ps1) | 有 | HTTPS，username／secretkey |
-| [FortigateSW.ps1](../../examples/custom-app-login/scripts/FortigateSW.ps1) | 有 | HTTPS，username／password |
-| [HPESW.ps1](../../examples/custom-app-login/scripts/HPESW.ps1) | 有 | HTTPS，inputUsername／inputPassword |
-| [Nessus.ps1](../../examples/custom-app-login/scripts/Nessus.ps1) | 有 | HTTPS，自動加 :8834 |
-| [NReporter.ps1](../../examples/custom-app-login/scripts/NReporter.ps1) | 有 | HTTPS，username／password |
-| [PVE.ps1](../../examples/custom-app-login/scripts/PVE.ps1) | 有 | 動態元素 ID、password 指向 inputWrap，realm 選取器含 namr 疑點 |
-| [Synology.ps1](../../examples/custom-app-login/scripts/Synology.ps1) | 有 | HTTP，分兩階段輸入帳號與密碼 |
-| [Netapp.ps1](../../examples/custom-app-login/scripts/Netapp.ps1) | 無 | HTTPS，XPath 與 CSS Selector |
-| [Paloalto.ps1](../../examples/custom-app-login/scripts/Paloalto.ps1) | 無 | HTTPS，user／passwd |
-| [Peplink.ps1](../../examples/custom-app-login/scripts/Peplink.ps1) | 無 | HTTPS，Name 與 Class 選取 |
-| [pve_auth1.ps1](../../examples/custom-app-login/scripts/pve_auth1.ps1) | 無 | PVE realm 可指定、使用 Timeout；成功資源樹檢查被註解 |
-| [MSSQL.ps1](../../examples/custom-app-login/scripts/MSSQL.ps1) | 無 | SSMS 20.x 繁體中文 UI Automation；非 Selenium |
-
-## 原始實作限制與驗收
-
-原檔保留供追溯，本次未把它們改成新的正式部署腳本。需在隔離測試主機確認以下行為，再投入共用發佈環境：
-
-- 網頁腳本普遍以 `taskkill /f /im chromedriver.exe` 結束程序，沒有鎖定本次 PID，可能終止其他使用者的 driver。應先完成工作階段隔離與程序生命週期設計，再驗收兩人同時登入。
-- `ignore-certificate-errors` 會略過憑證驗證；DrIP／Synology 原檔使用 HTTP。正式環境應依設備能力配置可信任 HTTPS，不能把這些來源設定視為安全建議。
-- 命令列有密碼參數，可能被有權讀取程序資訊者或記錄工具取得；含空白、引號與特殊字元的憑證也須測試傳遞結果，不保存真實密碼命令列。
-- 多數腳本只有固定等待，按下登入後未驗證成功；Chrome／driver 相容仍可能因 XPath 或登入流程變更而失敗。
-- MSSQL 的 `#requires -Version 5.1` 只是最低版本聲明，不代表已驗證 PowerShell 7 相容。它使用 UIAutomation／Win32 且依 SSMS 20.x 繁體介面；需另外測試執行環境。`-ResetProfile` 刪除 SqlStudio.bin、`-TrustServerCertificate` 略過伺服器憑證驗證，來源檔沒有 WhatIf 保護，不宜直接套用。
-
-每個發佈項目應記錄 PowerShell、模組、瀏覽器實際路徑及版本、ChromeDriver 版本、目標應用程式版本、asset 格式與預期登入頁。使用專用測試帳戶確認正確主機與身分、失敗訊息、登出／歸還及 SPS 側錄對應，再測同時兩個工作階段是否互相影響。沒有測試記錄的項目維持「來源範例」，不標成驗收通過。
-
-## 取得檔案與相關文件
-
-大型套件採 Git LFS，取得專案後執行 `git lfs pull`。以 [manifest.json](../../examples/custom-app-login/manifest.json) 核對 SHA-256；本次保存的 23 個原始檔案與來源位元組一致。來源資料夾內其他設備表、授權檔與客戶文件不屬於代登 PS1／元件範圍，未納入。
+大型套件以 Git LFS 管理，取得專案後執行 `git lfs pull`，再以 [manifest.json](../../examples/custom-app-login/manifest.json) 核對 SHA-256。manifest 記錄的是原始來源檔案；MSSQL.ps1 已換成改良版，原始版本可由 `git show 1b986d8:examples/custom-app-login/scripts/MSSQL.ps1` 取得。來源資料夾內的設備表、授權檔與客戶文件不屬於代登範圍，未納入。
 
 - [KB 目錄](README.md)
-- [原始腳本、元件與限制](../../examples/custom-app-login/README.md)
+- [代登範例目錄](../../examples/custom-app-login/README.md)
 - [RemoteApp 整合 SOP](../sop/remoteapp-integration.md)

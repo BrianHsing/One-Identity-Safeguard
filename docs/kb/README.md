@@ -6,7 +6,7 @@
 |---|---|---|
 | KB-001 | [SPP 外部 Federation 登入出現 AADSTS75011](spp-federation-aadsts75011.md) | 原文件為 SPP 9.0／API v4；官方 KB 引用 v3，本次原廠頁面 403 |
 | KB-002 | [RDP 工作階段重新導向本機磁碟](safeguard-rdp-drive-redirection.md) | 原文件未載 SPP／SPS 版本；保留歷史操作圖 |
-| KB-003 | [RemoteApp／PowerShell Selenium 客製化代登](custom-app-login-selenium.md) | 16 支來源 PS1、6 個 requirement 檔案與發佈截圖；未執行驗收 |
+| KB-003 | [客製化應用程式代登腳本參考](custom-app-login-selenium.md) | 17 支代登腳本、套件與排錯案例；MSSQL.ps1、SPS.ps1 改良版已於 2026-11-19 實測，其餘為來源範例 |
 | KB-004 | [Player 回放與簽章、時間戳記驗證](sps-player-signature-timestamp.md) | SPS 9.0 案例紀錄；Player 版本未記錄，未獨立重現 |
 | KB-005 | [SPP 固定密碼重設與簽回後觸發](spp-fixed-password-windows.md) | 使用者 AIX／SPP 9.0 Windows lab 案例；公開版僅靜態與合成測試，03:00 自然觸發待確認 |
 | KB-006 | [SPP 資產、帳號與密碼 CSV 匯入](spp-csv-import.md) | 使用者確認資產、帳號與密碼測試成功；版本未記錄，公開範例僅靜態驗證 |
