@@ -92,7 +92,7 @@ PGADMIN.ps1 的設計重點（pgAdmin 9.19 實測得出）：
 | 日誌顯示「信任伺服器憑證初始狀態：無法讀取」 | SSMS 20.2.37.0 的勾選框不支援 UI Automation 的 TogglePattern | 腳本退回切換，需搭配 `-ResetProfile` |
 | 目標帳戶 `Administrator@yjcloud.org` 無法登入 | 疑似 AD 網域帳戶；SQL Server 驗證只接受 SQL 登入（該次同時有網路錯誤，未單獨確認） | 改用 SQL 登入 `sa` |
 
-同一發佈主機的觀察：未安裝 RD 工作階段主機角色（`RDS-RD-Server` 為 Available）、Windows 尚未啟用（事件 8198，slui `0x87E10BC6`），RemoteApp 仍可啟動。這不符合正式授權要求。
+同一發佈主機的觀察：未安裝 RD 工作階段主機角色（`RDS-RD-Server` 為 Available）、Windows 尚未啟用（事件 8198，slui `0x87E10BC6`），RemoteApp 仍可啟動：以 Remote Application Publisher 發佈時不需要 RDSH，但最多 2 個同時工作階段；Windows 啟用則一律需要。RDS CAL 是否需要須另向授權窗口確認（見 [SOP 前置條件](../sop/remoteapp-integration.md#前置條件)）。
 
 ### 2026-11-19：pgAdmin（PostgreSQL）RemoteApp 代登
 

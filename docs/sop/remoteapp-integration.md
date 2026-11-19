@@ -41,8 +41,14 @@ flowchart LR
 ## 前置條件
 
 - [ ] SPP 與 SPS 已完成整合，SPS 可連到發佈主機，發佈主機可連到目標系統。
-- [ ] 已確認 RDS 授權：發佈主機安裝 RD 工作階段主機角色，並備妥 RDS CAL 與授權伺服器。Windows Server 管理用遠端連線不能替代 RDS 發佈授權（[Microsoft RDS CAL 說明](https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/rds-client-access-license)）。
+- [ ] 已確認發佈主機的同時使用人數與授權（見下方說明），並留存結論。
 - [ ] 已記錄下表各物件的實際值。
+
+> [!IMPORTANT]
+> **RD 工作階段主機（RDSH）與 RDS CAL**：技術與授權要分開確認。
+> - **技術上**：Remote Application Publisher 只把發佈項目寫進 `TSAppAllowList`，搭配步驟 1 的兩個登錄值即可運作，**不需要安裝 RDSH 角色**。沒有 RDSH 時，Windows Server 以遠端桌面管理模式運作，**最多 2 個同時工作階段**；需要更多人同時使用時才須安裝 RDSH。
+> - **授權上**：是否需要 RDS CAL，取決於微軟授權條款與發佈主機的實際用途，與使用哪種發佈工具無關。管理模式免 CAL 是針對管理該伺服器本身；發佈主機用來跳板操作其他系統是否屬於此範圍，須向客戶的微軟授權窗口確認並留存紀錄（[Microsoft RDS CAL 說明](https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/rds-client-access-license)）。
+> - **Windows 啟用**：不論是否安裝 RDSH，一律需要。
 
 | 物件 | 範例 | 說明 |
 |---|---|---|
@@ -63,7 +69,9 @@ flowchart LR
 
 **授權與主機**
 
-- [ ] 發佈主機已安裝 RD 工作階段主機角色，RDS CAL 與授權伺服器就緒，Windows 已啟用。實驗室主機缺這些仍能啟動 RemoteApp，但不符合正式授權。
+- [ ] 預估同時使用人數：超過 2 人須安裝 RDSH 角色，否則第 3 個工作階段會被拒絕（見 [前置條件](#前置條件)）。
+- [ ] 已向客戶的微軟授權窗口確認是否需要 RDS CAL，結論已留存。
+- [ ] 發佈主機的 Windows 已啟用。
 - [ ] RemoteApp 執行帳戶是專用帳戶，不與一般使用者或管理員共用。PGADMIN.ps1 每次會清空該帳戶的 pgAdmin 伺服器清單，MSSQL.ps1 的 `-ResetProfile` 會清除該帳戶的 SSMS 設定。
 
 **密碼與命令列**
@@ -640,7 +648,7 @@ finally {
 | 版本 | SPP 9.0.0.2807、SPS 9.0.0 的畫面；引用的 8.0 LTS 官方設定須依現場版本確認，不代表 9.0 全功能相容 |
 | 2026-11-19 實測 | MSSQL：經 SPP／RemoteApp 以 `sg_svc` 代登 SSMS 20.2.37.0 成功（SQL 驗證）。SPS：改良版 SPS.ps1 登入成功，CfT 與 ChromeDriver 同為 155.0.8059.79，該次執行帳號為 `Administrator`，若 RemoteApp 實際使用其他帳號須再驗收。pgAdmin：經 SPP／RemoteApp 以 `sg_svc` 代登 pgAdmin 4 9.19，連線 PostgreSQL 18 成功（`postgres` 帳戶，未啟用 SSL） |
 | 2026-10-07 案例 | 改用 Machine PATH 後解決 `cannot find Chrome binary`，為使用者回報的單一案例 |
-| 發佈主機觀察 | 本案發佈主機未安裝 RD 工作階段主機角色、Windows 尚未啟用，RemoteApp 仍能啟動；這不符合正式授權要求，正式環境須補齊 |
+| 發佈主機觀察 | 本案發佈主機未安裝 RDSH 角色，以 Remote Application Publisher 發佈，RemoteApp 可正常啟動（遠端桌面管理模式，最多 2 個同時工作階段）；Windows 尚未啟用，正式環境須啟用。RDS CAL 需求依授權窗口結論 |
 | 圖 1 | 設定說明圖，不是實機結果 |
 | 圖 2 | 只呈現登錄值，不代表有效 GPO 或代登成功 |
 | 圖 5 | Publisher 1.0.1.1905；未證明已按 Save |
