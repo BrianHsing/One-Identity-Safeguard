@@ -3,18 +3,23 @@
     SSMS 20.x RemoteApp 自動登入（One Identity Safeguard）
 
     介面字串繫結 SSMS 20.x 繁體中文版，換語言或升版必須同步修改 $UI。
+    本檔須以 UTF-8 with BOM 儲存，Windows PowerShell 5.1 才能正確讀取中文字串。
 
     勾選框處理說明：
     SSMS 的「信任伺服器憑證」是 owner-draw CheckBox，BM_GETCHECK 讀不到
-    真實狀態、BM_CLICK 無效、UIA SetFocus() 會被拒絕。本腳本改用兩種策略：
+    真實狀態、BM_CLICK 無效、UIA SetFocus() 會被拒絕。切換方式有兩種：
       策略 A：WM_COMMAND + BN_CLICKED 送到父視窗（不需搶前景，優先使用）
       策略 B：AttachThreadInput + SetFocus + 空白鍵（需搶前景，備援）
-    因為無法讀取狀態，腳本先以 A 嘗試並按下連線；若出現憑證錯誤對話框，
-    自動關閉後改用 B 重試一次。
+    腳本先以 UIA TogglePattern 讀取勾選狀態：
+      - 讀得到：已勾選就不動；未勾選則 A → 驗證 → B → 驗證，仍失敗即中止。
+      - 讀不到：退回盲切。先以 A 切換並連線；只有錯誤內容判定為憑證錯誤時，
+        才關閉錯誤方塊改用 B 重試一次（帳密錯誤等其他錯誤不重試，避免把
+        已勾選的狀態又切回未勾選）。
 
-    -ResetProfile 會在啟動前刪除 SqlStudio.bin，確保對話框回到已知初始
-    狀態（勾選框未勾、驗證方式為預設），同時清掉伺服器 MRU。共用
-    RemoteApp 主機建議啟用。
+    -ResetProfile 會在啟動前刪除 SSMS 19.x／20.x 的 UserSettings.xml 與
+    SqlStudio.bin（SSMS 18 以後連線 MRU 與勾選狀態存在 UserSettings.xml），
+    讓對話框回到已知初始狀態，同時清掉伺服器 MRU 與該帳號的 SSMS 偏好設定。
+    SSMS 結束時會把設定寫回，因此同一工作階段已有 SSMS 執行時清除無效。
 
     其他限制：
     1. 微軟官方不支援多人同時在同一台機器使用 SSMS（含多工作階段主機）。
@@ -22,6 +27,13 @@
        較乾淨的做法是將伺服器憑證匯入跳板機受信任根，必要時搭配
        -HostNameInCertificate。
     3. 全程記錄寫入 $LogPath，RemoteApp 工作階段沒有主控台可看。
+       日誌不記錄密碼，只記錄長度。
+
+    部署檢查（每次放置或搬移腳本都要核對相對位置）：
+    - Launcher 命令列 -File 指向的路徑，必須是本腳本實際所在位置；
+      搬移後未同步修改，會執行到舊版或找不到檔案而閃退。
+    - 日誌是固定路徑 C:\custom\MSSQL\MSSQL.log，不隨腳本位置改變。
+    - 每次執行的日誌開頭會記錄「腳本位置」，部署後第一次測試請先核對。
 #>
 [CmdletBinding()]
 param(
@@ -52,7 +64,8 @@ trap {
     break
 }
 
-Write-Log "=== 啟動 帳號=$env:USERNAME 資產=$asset 登入=$username 信任憑證=$($TrustServerCertificate.IsPresent) ==="
+Write-Log "=== 啟動 帳號=$env:USERNAME PS=$($PSVersionTable.PSVersion) 資產=$asset 登入=$username 信任憑證=$($TrustServerCertificate.IsPresent) 重設設定=$($ResetProfile.IsPresent) ==="
+Write-Log "腳本位置：$PSCommandPath"
 
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 Add-Type -AssemblyName System.Windows.Forms
@@ -96,6 +109,9 @@ $UI = @{
     CertHost  = '憑證中的主機名稱(H):'
     OK        = '確定'
 }
+
+# 判斷錯誤方塊是否為憑證錯誤（0x800B0109 = 憑證鏈結不受信任）
+$CertErrorPattern = '憑證|certificate|0x800B0109|SSL'
 
 $WM_SETTEXT       = 0x000C
 $WM_GETTEXTLENGTH = 0x000E
@@ -249,6 +265,27 @@ function Set-ComboValue {
     Write-Log "已設定 $Label = $Value"
 }
 
+# 以 UIA TogglePattern 讀取勾選狀態；WinForms 的 AccessibleObject 依 CheckState
+# 回報，不受 owner-draw 影響。讀不到時回傳 $null，由呼叫端退回盲切。
+function Get-CheckState {
+    param($Element)
+    $tp = $null
+    try {
+        if ($Element.TryGetCurrentPattern(
+                [System.Windows.Automation.TogglePattern]::Pattern, [ref]$tp)) {
+            $s = $tp.Current.ToggleState
+            if ($s -eq [System.Windows.Automation.ToggleState]::On)  { return $true }
+            if ($s -eq [System.Windows.Automation.ToggleState]::Off) { return $false }
+        }
+    } catch { }
+    return $null
+}
+
+function Format-CheckState {
+    param($State)
+    if ($null -eq $State) { '無法讀取' } elseif ($State) { '已勾選' } else { '未勾選' }
+}
+
 # 策略 A：把 BN_CLICKED 通知直接送給父視窗，由 WinForms 反射回控制項，
 # 會觸發 OnClick 進而翻轉 CheckState。不需要搶前景。
 function Invoke-CheckBoxByCommand {
@@ -290,6 +327,32 @@ function Invoke-CheckBoxByKey {
     Write-Log "策略B：AttachThreadInput + 空白鍵已送出（attached=$attached）"
 }
 
+# 確保勾選框為已勾選。回傳 $true 表示已驗證勾選；$false 表示狀態讀不到、
+# 只做了一次盲切（策略 A），需由連線結果判斷是否改用策略 B 重試。
+function Set-TrustChecked {
+    param($Dialog, $Element)
+    $state = Get-CheckState $Element
+    Write-Log "信任伺服器憑證初始狀態：$(Format-CheckState $state)"
+
+    if ($null -eq $state) {
+        Write-Log '無法讀取勾選狀態，改用盲切（建議搭配 -ResetProfile）'
+        Invoke-CheckBoxByCommand $Element
+        return $false
+    }
+    if ($state) { return $true }
+
+    Invoke-CheckBoxByCommand $Element
+    $state = Get-CheckState $Element
+    Write-Log "策略A後狀態：$(Format-CheckState $state)"
+    if ($state -ne $true) {
+        Invoke-CheckBoxByKey -Dialog $Dialog -Element $Element
+        $state = Get-CheckState $Element
+        Write-Log "策略B後狀態：$(Format-CheckState $state)"
+    }
+    if ($state -ne $true) { throw '無法勾選「信任伺服器憑證」（策略 A、B 皆無效）' }
+    $true
+}
+
 # 錯誤訊息方塊的標題與登入對話框同名，用是否含「確定」按鈕分辨
 function Get-ErrorDialog {
     param($Main)
@@ -300,6 +363,16 @@ function Get-ErrorDialog {
         } catch { }
     }
     $null
+}
+
+function Get-DialogText {
+    param($Dialog)
+    try {
+        $txtCond = New-Object System.Windows.Automation.PropertyCondition(
+                      $AE::ControlTypeProperty, [System.Windows.Automation.ControlType]::Text)
+        ($Dialog.FindAll($Desc, $txtCond) |
+            ForEach-Object { $_.Current.Name } | Where-Object { $_ }) -join ' / '
+    } catch { '' }
 }
 
 function Close-Dialog {
@@ -325,31 +398,45 @@ function Invoke-Connect {
     Write-Log '已按下連線'
 }
 
-# 連線成功的判斷：登入對話框消失；失敗則出現含「確定」的錯誤方塊
+# 連線成功的判斷：先查錯誤方塊；沒有錯誤且主視窗下已找不到登入對話框即成功。
+# 不以 IsOffscreen 判斷，避免對話框被隱藏而非銷毀時誤判為逾時。
 function Wait-ConnectResult {
-    param($Main, $Dialog, [int]$Sec = 40)
+    param($Main, [int]$Sec = 40)
     $end = (Get-Date).AddSeconds($Sec)
     while ((Get-Date) -lt $end) {
         Start-Sleep -Milliseconds 700
-        $err = Get-ErrorDialog $Main
-        if ($err) { return @{ Result = 'Error'; Dialog = $err } }
         try {
-            if (-not $Dialog.Current.IsOffscreen) {
-                $still = Find-ByName $Main $UI.Dialog
-                if (-not $still) { return @{ Result = 'Success' } }
-            }
-        } catch [System.Windows.Automation.ElementNotAvailableException] {
-            return @{ Result = 'Success' }
-        }
+            $err = Get-ErrorDialog $Main
+            if ($err) { return @{ Result = 'Error'; Dialog = $err } }
+            if (-not (Find-ByName $Main $UI.Dialog)) { return @{ Result = 'Success' } }
+        } catch [System.Windows.Automation.ElementNotAvailableException] { }
     }
     @{ Result = 'Timeout' }
 }
 
 if ($ResetProfile) {
-    $bin = Join-Path $env:APPDATA 'Microsoft\SQL Server Management Studio\20.0\SqlStudio.bin'
-    if (Test-Path $bin) {
-        Remove-Item $bin -Force -ErrorAction SilentlyContinue
-        Write-Log "已清除設定檔 $bin"
+    $mySession = (Get-Process -Id $PID).SessionId
+    $running = Get-Process -Name Ssms -ErrorAction SilentlyContinue |
+               Where-Object { $_.SessionId -eq $mySession }
+    if ($running) {
+        Write-Log '警告：此工作階段已有 SSMS 執行中，結束時會寫回設定，-ResetProfile 可能無效'
+    }
+    $root = Join-Path $env:APPDATA 'Microsoft\SQL Server Management Studio'
+    if (Test-Path $root) {
+        # 只處理 SSMS 19.x／20.x 的設定目錄，不動其他版本
+        Get-ChildItem $root -Directory | Where-Object { $_.Name -match '^(19|20)\.' } |
+            ForEach-Object {
+                foreach ($f in 'UserSettings.xml', 'SqlStudio.bin') {
+                    $p = Join-Path $_.FullName $f
+                    if (Test-Path $p) {
+                        Remove-Item $p -Force -ErrorAction SilentlyContinue
+                        if (Test-Path $p) { Write-Log "無法刪除設定檔 $p" }
+                        else { Write-Log "已清除設定檔 $p" }
+                    }
+                }
+            }
+    } else {
+        Write-Log "找不到 SSMS 設定目錄 $root（首次執行屬正常）"
     }
 }
 
@@ -358,7 +445,7 @@ $ssms = Get-ChildItem 'C:\Program Files (x86)\Microsoft SQL Server Management St
                       -Filter 'Ssms.exe' -Recurse -ErrorAction SilentlyContinue |
         Select-Object -First 1 -ExpandProperty FullName
 if (-not $ssms) { throw '找不到 SSMS 20' }
-Write-Log "SSMS 路徑：$ssms"
+Write-Log "SSMS 路徑：$ssms（版本 $((Get-Item $ssms).VersionInfo.ProductVersion)）"
 
 $proc = Start-Process $ssms -PassThru -ArgumentList '-nosplash'
 
@@ -386,56 +473,66 @@ $fields = Wait-For -Sec 30 -What '登入欄位' -Probe { Get-FieldMap $dlg $UI.P
 # 驗證方式必須先設定，否則登入與密碼欄位為停用狀態，寫不進去
 Set-ComboValue (Get-InputFor $fields $UI.Auth) $UI.AuthSql '驗證方式'
 
-# 切換驗證方式後 WinForms 會重建欄位，舊的 AutomationElement 與 Hwnd 失效
-$fields = Wait-For -Sec 15 -What '切換後的登入欄位' -Probe {
+# 切換驗證方式後 WinForms 會重建欄位，舊的 AutomationElement 與 Hwnd 失效。
+# 等到「登入」輸入欄位真的變成啟用狀態才繼續，而不是只看標籤是否存在。
+$fields = Wait-For -Sec 15 -What '切換後的登入欄位啟用' -Probe {
     $m = Get-FieldMap $dlg $UI.Password
-    if ($m -and ($m | Where-Object { $_.Name -eq $UI.Login })) { $m } else { $null }
+    if (-not $m) { return $null }
+    try { $loginEl = Get-InputFor $m $UI.Login } catch { return $null }
+    if ($loginEl.Current.IsEnabled) { ,$m } else { $null }
 }
 
 Set-EditText (Get-InputFor $fields $UI.Server) $asset    '伺服器名稱'
 Set-EditText (Get-InputFor $fields $UI.Login)  $username '登入名稱'
 
 if ($HostNameInCertificate) {
-    Set-EditText (Get-InputFor $fields $UI.CertHost) $HostNameInCertificate '憑證主機名稱'
+    # 憑證主機名稱可能位於另一個群組面板，不在密碼所在的面板時改以它為錨點
+    $certMap = $fields
+    if (-not ($fields | Where-Object { $_.Name -eq $UI.CertHost })) {
+        $certMap = Wait-For -Sec 10 -What '憑證主機名稱欄位' -Probe { Get-FieldMap $dlg $UI.CertHost }
+    }
+    Set-EditText (Get-InputFor $certMap $UI.CertHost) $HostNameInCertificate '憑證主機名稱'
 }
 
 $pwdElement = Get-InputFor $fields $UI.Password
 Set-EditText $pwdElement $password '密碼'
 
+$trustVerified = $false
 if ($TrustServerCertificate) {
     $trust = Find-ByName $dlg $UI.Trust
     if (-not $trust) { throw '找不到信任伺服器憑證' }
-    Invoke-CheckBoxByCommand $trust
+    $trustVerified = Set-TrustChecked -Dialog $dlg -Element $trust
 }
 
 Invoke-Connect $dlg
-$r = Wait-ConnectResult -Main $main -Dialog $dlg
+$r = Wait-ConnectResult -Main $main
 
-if ($r.Result -eq 'Error' -and $TrustServerCertificate) {
-    Write-Log '第一次連線失敗，改用策略B重試'
-    Close-Dialog $r.Dialog
+if ($r.Result -eq 'Error') {
+    $errText = Get-DialogText $r.Dialog
+    Write-Log "第一次連線錯誤：$errText"
 
-    $fields = Wait-For -Sec 15 -What '重試用的登入欄位' -Probe { Get-FieldMap $dlg $UI.Password }
-    Set-EditText (Get-InputFor $fields $UI.Password) $password '密碼（重試）'
+    $isCertError = $errText -match $CertErrorPattern
+    if ($TrustServerCertificate -and -not $trustVerified -and $isCertError) {
+        Write-Log '判定為憑證錯誤且勾選狀態無法讀取，改用策略B重試'
+        Close-Dialog $r.Dialog
 
-    $trust = Find-ByName $dlg $UI.Trust
-    if ($trust) { Invoke-CheckBoxByKey -Dialog $dlg -Element $trust }
+        $fields = Wait-For -Sec 15 -What '重試用的登入欄位' -Probe { Get-FieldMap $dlg $UI.Password }
+        Set-EditText (Get-InputFor $fields $UI.Password) $password '密碼（重試）'
 
-    Invoke-Connect $dlg
-    $r = Wait-ConnectResult -Main $main -Dialog $dlg
+        $trust = Find-ByName $dlg $UI.Trust
+        if ($trust) { Invoke-CheckBoxByKey -Dialog $dlg -Element $trust }
+
+        Invoke-Connect $dlg
+        $r = Wait-ConnectResult -Main $main
+        if ($r.Result -eq 'Error') { Write-Log "重試後錯誤：$(Get-DialogText $r.Dialog)" }
+    } elseif ($TrustServerCertificate -and $trustVerified -and $isCertError) {
+        Write-Log '勾選狀態已確認為勾選仍出現憑證錯誤，請檢查伺服器憑證或 -HostNameInCertificate'
+    } else {
+        Write-Log '非憑證錯誤，不重試（請檢查帳密、伺服器名稱與網路）'
+    }
 }
 
 $password = $null
 [System.GC]::Collect()
 
 Write-Log "結果：$($r.Result)"
-if ($r.Result -eq 'Error') {
-    $detail = ''
-    try {
-        $txtCond = New-Object System.Windows.Automation.PropertyCondition(
-                      $AE::ControlTypeProperty, [System.Windows.Automation.ControlType]::Text)
-        $detail = ($r.Dialog.FindAll($Desc, $txtCond) |
-                   ForEach-Object { $_.Current.Name } | Where-Object { $_ }) -join ' / '
-    } catch { }
-    Write-Log "錯誤內容：$detail"
-}
