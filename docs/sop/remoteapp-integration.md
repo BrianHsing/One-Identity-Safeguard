@@ -237,20 +237,48 @@ Start-SeDriver -Browser Chrome `
 
 圖 6：使用者提供的 Remote Application Publisher 1.0.3.48455 畫面。ApexOne 的 Program Path 是 `||ApexOne`，Command Line 呼叫 pwsh.exe。右側部分 Fortigate 命令列已被裁切，不據此猜測完整內容。
 
-選取對應項目後核對 Name、Full Name、Program Path 及 Command Line。以下是圖中 ApexOne 的呼叫方式，用於 Launcher／Publisher 設定，不是直接在 PowerShell 視窗執行的指令：
+選取對應項目後核對 Name、Full Name、Program Path 及 Command Line。以下以 MSSQL（SSMS 20 代登，腳本 `mssql.ps1`）為例，用於 Launcher／Publisher 設定，不是直接在 PowerShell 視窗執行的指令：
+
+```text
+--cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args "-File C:\custom\mssql\mssql.ps1 -username {username} -password {password} -asset {Target.AssetNetworkAddress} -TrustServerCertificate"
+```
+
+命令列分成兩層：`--cmd`、`--args` 由 RemoteApp Launcher 解讀；`--args` 引號內的字串再交給 `pwsh.exe`，其中 `-File` 之後的所有參數都會原樣傳給腳本。pwsh 本身的參數（例如 `-NoProfile`）必須寫在 `-File` 之前。
+
+| 參數 | 層級 | 用途 | 核對重點 |
+|---|---|---|---|
+| `--cmd` | Launcher | Launcher 要啟動的程式，本例為 PowerShell 7 | 路徑存在、RemoteApp 執行帳戶有權啟動 |
+| `--args` | Launcher | 交給 `--cmd` 程式的整串參數 | 整串以雙引號包住，內部不再巢狀加引號 |
+| `-File` | pwsh | 要執行的 PS1 | 必須是腳本實際放置位置；搬移腳本後同步修改，否則會執行舊版或找不到檔案而閃退 |
+| `-username` | 腳本 | 目標 SQL Server 登入名稱，由 SPP 帶入 `{username}` | 須為 SQL 登入（例如 `sa`）；腳本固定使用「SQL Server 驗證」，AD 網域帳戶無法以此方式登入 |
+| `-password` | 腳本 | 目標帳戶密碼，由 SPP 帶入 `{password}` | 不是 Windows 發佈主機登入帳密；含空白、`"` 或以 `-` 開頭的密碼會被拆錯，須以測試密碼驗證 |
+| `-asset` | 腳本 | 填入 SSMS「伺服器名稱」，由 SPP 帶入 `{Target.AssetNetworkAddress}` | 非預設埠或具名執行個體須為 `host,port` 或 `host\instance`；不加 scheme |
+| `-TrustServerCertificate` | 腳本（選用） | 勾選「信任伺服器憑證」 | 連線仍加密，但不驗證憑證來源；伺服器憑證已受發佈主機信任時應省略 |
+
+腳本另支援下列選用參數，未指定時使用預設值：
+
+| 參數 | 預設值 | 用途 |
+|---|---|---|
+| `-ResetProfile` | 關閉 | 啟動前清除 SSMS 19.x／20.x 的 `UserSettings.xml` 與 `SqlStudio.bin`，讓勾選框與驗證方式回到已知狀態 |
+| `-HostNameInCertificate` | 空白 | 填入「憑證中的主機名稱」，用於憑證名稱與連線位址不同時 |
+| `-TimeoutSec` | `120` | 等待 SSMS 主視窗與連線對話框的秒數 |
+| `-LogPath` | `C:\custom\MSSQL\MSSQL.log` | 腳本日誌位置；日誌不記錄密碼 |
+
+上述選用參數也可寫在與腳本同資料夾的 `mssql.config.psd1`，命令列明確傳入者優先。設定檔以腳本所在資料夾尋找，放錯位置不會報錯，只會改用預設值；部署後先核對日誌開頭的「腳本位置」與「已套用設定檔／未找到設定檔」兩行。
+
+**命令列長度限制**：本案命令列約 300 字元時，RemoteApp 顯示「無法打開此程式或檔案」，縮短為只傳帳密與資產（約 165 字元）後恢復正常；未逐一還原參數，尚無法確定是長度上限或特定參數所致。上方範例約 189 字元，部署後須實測；其餘選項優先放入設定檔，不要繼續加長命令列。
+
+**別名須一致**：SPP 存取要求原則的「應用程式別名」必須與 Publisher 的項目名稱相同。本案原則填 `||SSMS`、發佈主機實際為 `MSSQL`，同樣出現「無法打開此程式或檔案」。
+
+**權限**：RemoteApp 執行帳戶對腳本與設定檔只給讀取與執行（RX），只對日誌檔或日誌子資料夾給寫入；腳本會收到目標帳戶密碼，不可讓使用者改寫。
+
+ApexOne 等網站腳本則使用 `-asset {asset}`，由腳本自行補 `https://`，避免重複 scheme：
 
 ```text
 --cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args "-File C:\custom\ApexOne\ApexOne.ps1 -username {username} -password {password} -asset {asset}"
 ```
 
-| 參數 | 傳入 PS1 的用途 | 核對重點 |
-|---|---|---|
-| `--cmd` | Launcher 要啟動的 PowerShell | 路徑存在、執行帳戶有權啟動 |
-| `-File` | 要執行的 PS1 | 檔案存在，符合該應用程式版本 |
-| `-username`／`-password` | 目標應用程式帳密 | 不是 Windows 發佈主機登入帳密；特殊字元需測試 |
-| `-asset` | 目標位址 | ApexOne 腳本自行補 https://，避免重複 scheme |
-
-來源 `pwsh.txt` 另使用 `{Target.AssetNetworkAddress}`。兩種替代欄位不能任意互換；須依當版 Launcher／SPP 設定確認實際帶入值。尤其不要同時把目標 Network Address 設為 None，卻又期待該欄位提供網站位址。實際資產建模與欄位映射尚缺已完成案例畫面，須以測試結果決定。
+`{asset}` 與 `{Target.AssetNetworkAddress}` 兩種替代欄位不能任意互換；須依當版 Launcher／SPP 設定確認實際帶入值，可由腳本日誌記錄的資產值核對。尤其不要同時把目標 Network Address 設為 None，卻又期待該欄位提供連線位址。
 
 #### 3.1 用腳本內日誌定位閃退
 
