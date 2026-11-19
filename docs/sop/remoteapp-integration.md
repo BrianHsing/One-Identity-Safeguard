@@ -237,24 +237,41 @@ Start-SeDriver -Browser Chrome `
 
 圖 6：使用者提供的 Remote Application Publisher 1.0.3.48455 畫面。ApexOne 的 Program Path 是 `||ApexOne`，Command Line 呼叫 pwsh.exe。右側部分 Fortigate 命令列已被裁切，不據此猜測完整內容。
 
-選取對應項目後核對 Name、Full Name、Program Path 及 Command Line。以下以 MSSQL（SSMS 20 代登，腳本 `mssql.ps1`）為例，用於 Launcher／Publisher 設定，不是直接在 PowerShell 視窗執行的指令：
+選取對應項目後核對 Name、Full Name、Program Path 及 Command Line。以下兩個範例分別代表桌面應用程式與網頁應用程式，命令列格式相同，差別在腳本如何操作目標與 `-asset` 的內容。命令列用於 Launcher／Publisher 設定，不是直接在 PowerShell 視窗執行的指令。
+
+| 項目 | 範例一：MSSQL（桌面應用程式） | 範例二：SPS（網頁應用程式） |
+|---|---|---|
+| 目標 | SSMS 20 連線至 SQL Server | SPS 管理網頁 |
+| 自動化方式 | UI Automation 與 Win32 訊息操作 SSMS 視窗 | Selenium 驅動 Chrome 操作網頁 |
+| Publisher 別名／SPP 原則別名 | `MSSQL`／`\|\|MSSQL` | `SPS`／`\|\|SPS` |
+| 腳本位置 | `C:\custom\mssql\mssql.ps1` | `C:\custom\sps\sps.ps1` |
+| `-asset` 內容 | SQL Server 名稱，不加 scheme | 主機位址，不加 scheme；腳本自行補 `https://` |
+| 選用參數 | `-TrustServerCertificate`、`-ResetProfile` 等 | 無 |
+| 腳本日誌 | `C:\custom\MSSQL\MSSQL.log` | 無 |
+
+命令列分成兩層：`--cmd`、`--args` 由 RemoteApp Launcher 解讀；`--args` 引號內的字串再交給 `pwsh.exe`，其中 `-File` 之後的所有參數都會原樣傳給腳本。pwsh 本身的參數（例如 `-NoProfile`）必須寫在 `-File` 之前。兩個範例共通的參數如下：
+
+| 參數 | 層級 | 用途 | 核對重點 |
+|---|---|---|---|
+| `--cmd` | Launcher | Launcher 要啟動的程式，兩例皆為 PowerShell 7 | 路徑存在、RemoteApp 執行帳戶有權啟動 |
+| `--args` | Launcher | 交給 `--cmd` 程式的整串參數 | 整串以雙引號包住，內部不再巢狀加引號 |
+| `-File` | pwsh | 要執行的 PS1 | 必須是腳本實際放置位置；搬移腳本後同步修改，否則會執行舊版或找不到檔案而閃退 |
+| `-username` | 腳本 | 目標帳戶名稱，由 SPP 帶入 `{username}` | 不是 Windows 發佈主機登入帳戶 |
+| `-password` | 腳本 | 目標帳戶密碼，由 SPP 帶入 `{password}` | 含空白、`"` 或以 `-` 開頭的密碼會被拆錯，須以測試密碼驗證 |
+| `-asset` | 腳本 | 目標位址，由 SPP 帶入 `{Target.AssetNetworkAddress}` | 依各範例說明填寫格式 |
+
+##### 範例一：MSSQL（SSMS 20 代登）
 
 ```text
 --cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args "-File C:\custom\mssql\mssql.ps1 -username {username} -password {password} -asset {Target.AssetNetworkAddress} -TrustServerCertificate -ResetProfile"
 ```
 
-命令列分成兩層：`--cmd`、`--args` 由 RemoteApp Launcher 解讀；`--args` 引號內的字串再交給 `pwsh.exe`，其中 `-File` 之後的所有參數都會原樣傳給腳本。pwsh 本身的參數（例如 `-NoProfile`）必須寫在 `-File` 之前。
-
-| 參數 | 層級 | 用途 | 核對重點 |
-|---|---|---|---|
-| `--cmd` | Launcher | Launcher 要啟動的程式，本例為 PowerShell 7 | 路徑存在、RemoteApp 執行帳戶有權啟動 |
-| `--args` | Launcher | 交給 `--cmd` 程式的整串參數 | 整串以雙引號包住，內部不再巢狀加引號 |
-| `-File` | pwsh | 要執行的 PS1 | 必須是腳本實際放置位置；搬移腳本後同步修改，否則會執行舊版或找不到檔案而閃退 |
-| `-username` | 腳本 | 目標 SQL Server 登入名稱，由 SPP 帶入 `{username}` | 須為 SQL 登入（例如 `sa`）；腳本固定使用「SQL Server 驗證」，AD 網域帳戶無法以此方式登入 |
-| `-password` | 腳本 | 目標帳戶密碼，由 SPP 帶入 `{password}` | 不是 Windows 發佈主機登入帳密；含空白、`"` 或以 `-` 開頭的密碼會被拆錯，須以測試密碼驗證 |
-| `-asset` | 腳本 | 填入 SSMS「伺服器名稱」，由 SPP 帶入 `{Target.AssetNetworkAddress}` | 非預設埠或具名執行個體須為 `host,port` 或 `host\instance`；不加 scheme |
-| `-TrustServerCertificate` | 腳本（選用） | 勾選「信任伺服器憑證」 | 連線仍加密，但不驗證憑證來源；伺服器憑證已受發佈主機信任時應省略 |
-| `-ResetProfile` | 腳本（選用） | 啟動前清除該帳戶 SSMS 19.x／20.x 的 `UserSettings.xml` 與 `SqlStudio.bin`，讓勾選框與驗證方式回到預設 | 與 `-TrustServerCertificate` 搭配使用；會一併清除伺服器連線紀錄與該帳戶的 SSMS 偏好設定 |
+| 參數 | 用途 | 核對重點 |
+|---|---|---|
+| `-username` | SQL Server 登入名稱 | 須為 SQL 登入（例如 `sa`）；腳本固定使用「SQL Server 驗證」，AD 網域帳戶無法以此方式登入 |
+| `-asset` | 填入 SSMS「伺服器名稱」 | 非預設埠或具名執行個體須為 `host,port` 或 `host\instance`；不加 scheme |
+| `-TrustServerCertificate`（選用） | 勾選「信任伺服器憑證」 | 連線仍加密，但不驗證憑證來源；伺服器憑證已受發佈主機信任時應省略 |
+| `-ResetProfile`（選用） | 啟動前清除該帳戶 SSMS 19.x／20.x 的 `UserSettings.xml` 與 `SqlStudio.bin`，讓勾選框與驗證方式回到預設 | 與 `-TrustServerCertificate` 搭配使用；會一併清除伺服器連線紀錄與該帳戶的 SSMS 偏好設定 |
 
 **為什麼兩者要搭配**：SSMS 20.2 的「信任伺服器憑證」勾選框無法以 UI Automation 讀取狀態（日誌顯示「信任伺服器憑證初始狀態：無法讀取」），腳本只能切換、不能指定為勾選。SSMS 會記住上次的勾選狀態，未重設時切換可能把已勾選切回未勾選，出現 `SSL Provider` 的「此憑證鏈結是由不受信任的授權單位發出的」。本案實測：未加 `-ResetProfile` 時因 SSMS 記住先前勾選而看似不需要信任憑證；加上 `-ResetProfile` 回到未勾選後即出現上述憑證錯誤。腳本若判定為憑證錯誤，會關閉錯誤方塊改以第二種方式切換並重試一次。
 
@@ -268,15 +285,42 @@ Start-SeDriver -Browser Chrome `
 | `-TimeoutSec` | `120` | 等待 SSMS 主視窗與連線對話框的秒數 |
 | `-LogPath` | `C:\custom\MSSQL\MSSQL.log` | 腳本日誌位置；日誌不記錄密碼 |
 
-需要時直接加在命令列 `--args` 引號內、`-File` 路徑之後。每次放置或搬移腳本，都要核對 `-File` 路徑與腳本實際位置一致；日誌開頭會記錄「腳本位置」，部署後第一次測試先核對這一行。
+需要時直接加在命令列 `--args` 引號內、`-File` 路徑之後。日誌開頭會記錄「腳本位置」，部署後第一次測試先核對這一行。
 
-**命令列長度限制**：本案命令列約 300 字元時，RemoteApp 顯示「無法打開此程式或檔案」，縮短為只傳帳密與資產（約 165 字元）後恢復正常；未逐一還原參數，尚無法確定是長度上限或特定參數所致。上方範例約 203 字元，部署後須實測；只加入實際需要的選用參數，每加一個就重新測試一次。
+##### 範例二：SPS（SPS 管理網頁代登）
+
+```text
+--cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args "-File C:\custom\sps\sps.ps1 -username {username} -password {password} -asset {Target.AssetNetworkAddress}"
+```
+
+| 參數 | 用途 | 核對重點 |
+|---|---|---|
+| `-username` | SPS 本機帳戶名稱，輸入登入頁的 `local-username` 欄位 | 須為 SPS 本機登入帳戶 |
+| `-asset` | SPS 主機位址，腳本組成 `https://<asset>` 開啟 | 只填主機名稱或 IP，不加 `https://`，避免重複 scheme；非 443 埠須寫成 `host:port` |
+
+sps.ps1 為現場既有腳本，流程是開啟 Chrome、等待 2 秒、依元素 ID `local-username`、`local-password` 填入帳密，再按 class 為 `flat primary` 的登入按鈕。與範例一及本文 2.3 節標準相比，有下列差異，正式部署前須評估：
+
+| 項目 | sps.ps1 現況 | 影響與建議 |
+|---|---|---|
+| Chrome 與 ChromeDriver 路徑 | 未指定 `-BinaryPath`、`-WebDriverPath` | 依賴 PATH 或模組預設位置，可能用到其他版本的 Chrome 或 driver；建議依 2.3 節明確指定 |
+| 憑證檢查 | 啟動參數含 `ignore-certificate-errors` | 略過 SPS 網頁憑證錯誤，只適合受控測試；SPS 換用受信任憑證後應移除 |
+| 頁面等待 | 固定 `Start-Sleep -Seconds 2` | 頁面載入較慢時會找不到欄位；建議改為等待元素出現 |
+| 元素定位 | 綁定登入頁的 ID 與 class | SPS 升版改版登入頁時須同步修改 |
+| 結束處理 | `taskkill /f /im chromedriver.exe` | 會結束主機上所有使用者的 chromedriver；多人共用主機時須改為只結束自己啟動的程序 |
+| 日誌 | 無 | 失敗時無從判斷停在哪一步；可參考 3.1 節加入階段日誌 |
+| PowerShell 版本 | 未加 `#requires -Version 7.0` | 誤以 Windows PowerShell 5.1 執行時，Selenium 模組可能載入失敗（見 2.3 節） |
+
+##### 兩個範例共通的注意事項
+
+**命令列長度限制**：本案 MSSQL 命令列約 300 字元時，RemoteApp 顯示「無法打開此程式或檔案」，縮短為只傳帳密與資產（約 165 字元）後恢復正常；未逐一還原參數，尚無法確定是長度上限或特定參數所致。範例一約 203 字元，已於本案部署測試成功；新增參數時每加一個就重新測試一次。
 
 **別名須一致**：SPP 存取要求原則的「應用程式別名」必須與 Publisher 的項目名稱相同。本案原則填 `||SSMS`、發佈主機實際為 `MSSQL`，同樣出現「無法打開此程式或檔案」。
 
+**腳本位置**：每次放置或搬移腳本，都要核對 `-File` 路徑與腳本實際位置一致；兩個腳本各自放在獨立資料夾，不共用。
+
 **權限**：RemoteApp 執行帳戶對腳本只給讀取與執行（RX），只對日誌檔或日誌子資料夾給寫入；腳本會收到目標帳戶密碼，不可讓使用者改寫。
 
-ApexOne 等網站腳本則使用 `-asset {asset}`，由腳本自行補 `https://`，避免重複 scheme：
+**資產替代欄位**：兩個範例都使用 `{Target.AssetNetworkAddress}`。ApexOne 腳本則使用 `-asset {asset}`，由腳本自行補 `https://`：
 
 ```text
 --cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args "-File C:\custom\ApexOne\ApexOne.ps1 -username {username} -password {password} -asset {asset}"
