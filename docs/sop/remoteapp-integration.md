@@ -1,6 +1,6 @@
 # SPP／SPS 遠端應用程式發佈整合
 
-使用者在 SPP 申請並取得核准後，經 SPS 代理連到 Windows 應用程式發佈主機，由 RemoteApp Launcher 啟動 PowerShell 7 腳本，自動登入目標系統。網頁系統以 Selenium 驅動 **Chrome for Testing（CfT）**，桌面程式（例如 SSMS）以 UI Automation 操作視窗。
+使用者在 SPP 申請並取得核准後，經 SPS 代理連到 Windows 應用程式發佈主機，由 RemoteApp Launcher 啟動 PowerShell 7 腳本，自動登入目標系統。網頁系統以 Selenium 驅動 **Chrome for Testing（CfT）**，桌面程式（例如 SSMS、pgAdmin）以 UI Automation 操作視窗。
 
 > [!NOTE]
 > 本文只寫「照著做」的步驟。套件版本與雜湊、各腳本的 asset 格式與限制、過去的排錯案例，請見 [KB-003：客製化應用程式代登腳本參考](../kb/custom-app-login-selenium.md)。
@@ -28,7 +28,7 @@ flowchart LR
     S -->|代理及側錄| R[Windows 應用程式發佈主機]
     R --> L[RemoteApp Launcher]
     L --> W[PowerShell 7 與 PS1]
-    W --> B[Chrome for Testing／SSMS]
+    W --> B[Chrome for Testing／SSMS／pgAdmin]
     B -->|應用程式帳戶登入| A[目標系統]
 ```
 
@@ -234,7 +234,7 @@ if ($PSCmdlet.ShouldProcess('Machine PATH','Append automation folders')) {
 
 ## 步驟 3：放置代登腳本
 
-1. 每個應用程式一個資料夾：`C:\custom\<應用程式>\<應用程式>.ps1`，例如 `C:\custom\mssql\mssql.ps1`、`C:\custom\sps\sps.ps1`。
+1. 每個應用程式一個資料夾：`C:\custom\<應用程式>\<應用程式>.ps1`，例如 `C:\custom\mssql\mssql.ps1`、`C:\custom\sps\sps.ps1`、`C:\custom\pgadmin\pgadmin.ps1`。
 2. 腳本以 **UTF-8 with BOM** 儲存，Windows PowerShell 5.1 才能正確讀取中文字串。
 3. 設定權限：
 
@@ -248,7 +248,7 @@ if ($PSCmdlet.ShouldProcess('Machine PATH','Append automation folders')) {
 
 4. 先以專用測試帳戶確認模組、網路與目標登入頁，再測完整代登。不要把正式密碼寫進 PS1 或測試紀錄。
 
-建議使用 repo 內的改良版腳本：[MSSQL.ps1](../../examples/custom-app-login/scripts/MSSQL.ps1)（SSMS）與 [SPS.ps1](../../examples/custom-app-login/scripts/SPS.ps1)（網頁）。其他原始腳本的限制見 KB-003。
+建議使用 repo 內的改良版腳本：[MSSQL.ps1](../../examples/custom-app-login/scripts/MSSQL.ps1)（SSMS）、[SPS.ps1](../../examples/custom-app-login/scripts/SPS.ps1)（網頁）與 [PGADMIN.ps1](../../examples/custom-app-login/scripts/PGADMIN.ps1)（pgAdmin 4 桌面版）。其他原始腳本的限制見 KB-003。
 
 ## 步驟 4：在 Publisher 建立發佈項目
 
@@ -330,17 +330,41 @@ Publisher 1.0.1.1905 的行為（[官方原始碼](https://github.com/OneIdentit
 | `-TimeoutSec`（選用） | 等待登入欄位的秒數，預設 `30` |
 | `-LogPath`（選用） | 日誌位置，預設 `C:\custom\sps\sps.log` |
 
-兩個範例的差別：
+#### 範例三：PostgreSQL（pgAdmin 4 桌面版）
 
-| 項目 | MSSQL | SPS |
-|---|---|---|
-| 自動化方式 | UI Automation 與 Win32 訊息操作 SSMS 視窗 | Selenium 驅動 Chrome for Testing |
-| 需要步驟 2 的 Selenium／CfT | 否 | 是 |
-| `-asset` 格式 | SQL Server 名稱，不加 scheme | 主機位址，腳本補 `https://` |
-| 日誌 | `C:\custom\MSSQL\MSSQL.log` | `C:\custom\sps\sps.log` |
+```text
+--cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args "-File C:\custom\pgadmin\pgadmin.ps1 -username {username} -password {password} -asset {Target.AssetNetworkAddress}"
+```
+
+| 參數 | 說明 |
+|---|---|
+| `-username` | PostgreSQL 資料庫帳戶（例如 `postgres`），不是 pgAdmin 的登入帳戶 |
+| `-asset` | PostgreSQL 主機名稱或 IP；非 5432 埠寫成 `host:port` |
+| `-Port`／`-Database`／`-SSLMode`（選用） | 預設 `5432`、`postgres`、`prefer`；PostgreSQL 啟用 SSL 後可改 `-SSLMode require` |
+| `-KeepServers`（選用） | 保留此帳戶 pgAdmin 原有的伺服器清單（預設每次清空重建，見下方） |
+| `-DumpTree`（選用） | 把 UI Automation 樹寫入日誌；首次部署或 pgAdmin 升版後用來調整，平常不加 |
+| `-NoMaximize`（選用） | 不自動最大化 pgAdmin 視窗 |
+| `-PgAdminPath`（選用） | 預設 `C:\Program Files\pgAdmin 4\runtime\pgAdmin4.exe`；找不到時自動搜尋 |
+| `-LogPath`（選用） | 日誌位置，預設 `C:\custom\pgadmin\pgadmin.log` |
+
+流程：以 pgAdmin 內附 Python 執行 `setup.py load-servers`，把資產登錄成伺服器（**不寫入密碼**）→ 啟動 pgAdmin → 雙擊 Servers 展開，pgAdmin 自動跳出 Connect to Server → 確認未勾選 Save Password → 輸入密碼並按 OK → 對話框關閉即判定成功。
+
+> [!WARNING]
+> - **伺服器清單每次清空重建**：預設以 `--replace` 登錄，RemoteApp 執行帳戶在 pgAdmin 裡原有的伺服器都會被清除，請使用專用帳戶。
+> - **PostgreSQL 的 `pg_hba.conf` 要放行兩個來源**：SPP appliance（Check System 與密碼輪替用）以及發佈主機（pgAdmin 連線用）。少一條，就會出現 `no pg_hba.conf entry`。
+> - 執行期間腳本會操作滑鼠與鍵盤，使用者不要動作，約 15 秒內完成。密碼以 Unicode 字元碼送出，不受 CapsLock 與中文輸入法影響，也不經過剪貼簿。
+
+三個範例的差別：
+
+| 項目 | MSSQL | SPS | pgAdmin |
+|---|---|---|---|
+| 自動化方式 | UI Automation 與 Win32 訊息操作 SSMS 視窗 | Selenium 驅動 Chrome for Testing | UI Automation、滑鼠與 SendInput 操作 Electron 視窗 |
+| 需要步驟 2 的 Selenium／CfT | 否 | 是 | 否 |
+| `-asset` 格式 | SQL Server 名稱，不加 scheme | 主機位址，腳本補 `https://` | 主機位址，可加 `:port` |
+| 日誌 | `C:\custom\MSSQL\MSSQL.log` | `C:\custom\sps\sps.log` | `C:\custom\pgadmin\pgadmin.log` |
 
 > [!NOTE]
-> ApexOne 等舊腳本使用 `-asset {asset}`。`{asset}` 與 `{Target.AssetNetworkAddress}` 不能任意互換，須依當版 Launcher／SPP 設定確認實際帶入值；兩支改良版腳本會把收到的資產值寫入日誌，可用來核對。不要把目標資產的 Network Address 設為 None，卻又期待它提供連線位址。
+> ApexOne 等舊腳本使用 `-asset {asset}`。`{asset}` 與 `{Target.AssetNetworkAddress}` 不能任意互換，須依當版 Launcher／SPP 設定確認實際帶入值；三支改良版腳本都會把收到的資產值寫入日誌，可用來核對。不要把目標資產的 Network Address 設為 None，卻又期待它提供連線位址。
 
 ## 步驟 5：在 SPP 建立資產與存取要求原則
 
@@ -476,6 +500,10 @@ Publisher 1.0.1.1905 的行為（[官方原始碼](https://github.com/OneIdentit
 | SSMS：`error: 40 - Could not open a connection to SQL Server` | 代登 | 網路層連不到 SQL Server：檢查 `-asset` 格式、TCP/IP 是否啟用、防火牆、SQL Browser |
 | SSMS：`SSL Provider` 憑證鏈結不受信任 | 代登 | 加上 `-TrustServerCertificate -ResetProfile`，或讓發佈主機信任 SQL Server 憑證 |
 | SSMS：登入失敗（錯誤 18456） | 代登 | 帳號須為 SQL 登入；看 SQL Server ERRORLOG 的 State：5＝登入不存在、8＝密碼錯誤、58＝伺服器只允許 Windows 驗證 |
+| SPP Check System：`SSL connection requested. No SSL enabled connection from this host is configured.` | SPP 資產 | 資產勾了 Use SSL，但 PostgreSQL 沒有提供 SSL：取消勾選，或在 PostgreSQL 啟用 `ssl = on` 並加 `hostssl` 規則 |
+| PostgreSQL 錯誤 `28000`、訊息為亂碼 | SPP 資產／代登 | 中文環境的 PostgreSQL 以 Big5 回傳訊息，內容是「no pg_hba.conf entry」：在 `pg_hba.conf` 為 SPP 與發佈主機的 IP 各加一條規則後 `SELECT pg_reload_conf();`。想看英文訊息可設 `lc_messages` 為英文 |
+| pgAdmin：密碼驗證失敗（亂碼為「嚴重錯誤: 密碼驗證失敗」） | 代登 | 日誌的「SendInput 送出 N 個事件」應為密碼長度 × 2；一致時改查 SPP 保存的密碼（Check Password） |
+| pgAdmin：只看到黑色視窗 | 啟動程式 | 黑色視窗是 Launcher 主控台；看日誌停在哪一步。`no pq wrapper available`、找不到主視窗等都已在腳本處理，請確認部署的是最新版 |
 
 **核對發佈主機上的別名與腳本路徑**（唯讀）：
 
@@ -495,7 +523,7 @@ Get-ChildItem $base | ForEach-Object {
 
 ### 排錯用日誌
 
-- 兩支改良版腳本會把每個階段寫入日誌，日誌不記錄密碼。
+- 三支改良版腳本會把每個階段寫入日誌，日誌不記錄密碼。
 - 不要把 `*> C:\...\debug.log` 加進 Launcher 命令列：`*>` 是 PowerShell 語法，經 `pwsh.exe -File` 傳入時會被當成腳本參數（[pwsh 的 File 參數](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_pwsh?view=powershell-7.4)）。
 - 不要把 `$password`、完整命令列、Token、Cookie 或完整錯誤物件寫入日誌；也不要為排錯開啟會收錄密碼的 Transcript。
 - 日誌對外分享前先去識別。
@@ -578,7 +606,7 @@ finally {
 | 範圍 | 狀態 |
 |---|---|
 | 版本 | SPP 9.0.0.2807、SPS 9.0.0 的畫面；引用的 8.0 LTS 官方設定須依現場版本確認，不代表 9.0 全功能相容 |
-| 2026-11-19 實測 | MSSQL：經 SPP／RemoteApp 以 `sg_svc` 代登 SSMS 20.2.37.0 成功（SQL 驗證）。SPS：改良版 SPS.ps1 登入成功，CfT 與 ChromeDriver 同為 155.0.8059.79，該次執行帳號為 `Administrator`，若 RemoteApp 實際使用其他帳號須再驗收 |
+| 2026-11-19 實測 | MSSQL：經 SPP／RemoteApp 以 `sg_svc` 代登 SSMS 20.2.37.0 成功（SQL 驗證）。SPS：改良版 SPS.ps1 登入成功，CfT 與 ChromeDriver 同為 155.0.8059.79，該次執行帳號為 `Administrator`，若 RemoteApp 實際使用其他帳號須再驗收。pgAdmin：經 SPP／RemoteApp 以 `sg_svc` 代登 pgAdmin 4 9.19，連線 PostgreSQL 18 成功（`postgres` 帳戶，未啟用 SSL） |
 | 2026-10-07 案例 | 改用 Machine PATH 後解決 `cannot find Chrome binary`，為使用者回報的單一案例 |
 | 發佈主機觀察 | 本案發佈主機未安裝 RD 工作階段主機角色、Windows 尚未啟用，RemoteApp 仍能啟動；這不符合正式授權要求，正式環境須補齊 |
 | 圖 1 | 設定說明圖，不是實機結果 |

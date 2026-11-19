@@ -27,6 +27,7 @@
 |---|---|---|---|---|
 | [MSSQL.ps1](../../examples/custom-app-login/scripts/MSSQL.ps1) | SSMS 20（UI Automation） | 無 | `host`、`host,port` 或 `host\instance` | **改良版，已實測**。SSMS 20.x 繁體中文介面；固定使用 SQL Server 驗證 |
 | [SPS.ps1](../../examples/custom-app-login/scripts/SPS.ps1) | 網頁（Selenium） | — | 主機或 `host:port`；已含 scheme 時不重複補 | **改良版，已實測**。`local-username`／`local-password`、class `flat primary` |
+| [PGADMIN.ps1](../../examples/custom-app-login/scripts/PGADMIN.ps1) | pgAdmin 4 桌面版（UI Automation） | — | 主機或 `host:port`（預設埠 5432） | **改良版，已實測**。pgAdmin 9.19 英文介面；`-username` 是 PostgreSQL 帳戶 |
 | [ApexOne.ps1](../../examples/custom-app-login/scripts/ApexOne.ps1) | 網頁 HTTPS | 有 | 主機 | `labelUsername`／`labelPassword` |
 | [ArubaVC.ps1](../../examples/custom-app-login/scripts/ArubaVC.ps1) | 網頁 HTTPS | 有 | 主機 | `login-username`／`login-password` |
 | [Dell.ps1](../../examples/custom-app-login/scripts/Dell.ps1) | 網頁 HTTPS | 有 | 主機 | iDRAC 絕對 XPath，介面改版需重測 |
@@ -43,7 +44,7 @@
 | [Peplink.ps1](../../examples/custom-app-login/scripts/Peplink.ps1) | 網頁 HTTPS | 無 | 主機 | Name 與 Class 選取 |
 | [pve_auth1.ps1](../../examples/custom-app-login/scripts/pve_auth1.ps1) | 網頁 HTTPS | 無 | 主機或完整 URL | 未含 scheme 時補 `https://`，但**不會**補 `:8006`；可指定 realm、使用 Timeout；成功檢查被註解 |
 
-除了標示「改良版，已實測」的兩支，其餘都是原樣保存的來源腳本，沒有測試紀錄，維持「來源範例」狀態。
+除了標示「改良版，已實測」的三支，其餘都是原樣保存的來源腳本，沒有測試紀錄，維持「來源範例」狀態。
 
 ## 原始腳本的限制與改良版做法
 
@@ -53,7 +54,7 @@
 | 未指定 Chrome 與 driver 路徑，只寫 `-Browser chrome` | 可能用到其他版本的 Chrome 或 driver | SPS.ps1 以 `-BinaryPath`、`-WebDriverPath` 明確指定，找不到時記錄警告 |
 | 固定 `Start-Sleep` 等待 | 頁面較慢時找不到欄位 | SPS.ps1 每 0.5 秒檢查一次，最多等 `-TimeoutSec` 秒 |
 | 按下登入後不確認結果 | 失敗時無從得知 | SPS.ps1 確認是否離開登入頁；MSSQL.ps1 判斷連線成功或錯誤並記錄錯誤內容 |
-| 沒有日誌 | RemoteApp 沒有主控台，失敗時無法判斷停在哪一步 | 兩支都寫階段日誌，不記錄密碼 |
+| 沒有日誌 | RemoteApp 沒有主控台，失敗時無法判斷停在哪一步 | 三支都寫階段日誌，不記錄密碼 |
 | `ignore-certificate-errors` 略過憑證；DrIP、Synology 使用 HTTP | 失去中間人防護 | SPS.ps1 預設仍略過，可用 `-VerifyCertificate` 恢復；正式環境應配置可信任的 HTTPS |
 | 密碼經命令列傳入 | 有權讀取程序資訊的人可能看到；特殊字元可能被拆錯 | Launcher 的設計限制，無法由腳本解決；以測試密碼驗證特殊字元 |
 | 沒有 `#requires -Version 7.0` | 誤用 Windows PowerShell 5.1 時 Selenium 可能載入失敗 | SPS.ps1 加上 `#requires -Version 7.0` |
@@ -64,6 +65,16 @@ MSSQL.ps1 的其他設計重點：
 - 「信任伺服器憑證」先嘗試以 UI Automation 讀取狀態；在 SSMS 20.2.37.0 讀不到，所以退回切換。因此 `-TrustServerCertificate` 必須搭配 `-ResetProfile`（見 [SOP 範例一](../sop/remoteapp-integration.md#範例一mssqlssms-20桌面程式)）。
 - 只有錯誤內容判定為憑證錯誤時，才改用第二種切換方式重試一次。
 - `-ResetProfile` 刪除的是 SSMS 19.x／20.x 的 `UserSettings.xml` 與 `SqlStudio.bin`，也會清掉該帳戶的伺服器連線紀錄與偏好設定。
+
+PGADMIN.ps1 的設計重點（pgAdmin 9.19 實測得出）：
+
+- 伺服器以 `setup.py load-servers --replace` 登錄，不寫密碼；呼叫前要把 `runtime` 資料夾（含 `libpq.dll`）加入 PATH，並以 UTF-8 解碼輸出。啟動 pgAdmin 前會清掉這些暫時的環境變數。
+- pgAdmin 的頂層視窗從 UI Automation 根節點列舉不到，改以 Win32 `EnumWindows` 找到後再轉成 UIA 元素。
+- 物件樹節點只露出 Text 元素，沒有 TreeItem 與展開模式；收合中的節點沒有座標，右方向鍵也無效，所以雙擊「Servers」展開，pgAdmin 會自動對唯一的伺服器跳出連線對話框。
+- 密碼以 `SendInput`（`KEYEVENTF_UNICODE`）逐字送出，日誌記錄送出的事件數（應為長度 × 2）；不用剪貼簿，避免經 RemoteApp 同步到使用者端。
+- OK 按鈕名稱前有圖示字元（實際為「 OK」），以正規比對尋找。
+- 連線對話框關閉即判定成功；失敗時記錄錯誤並把對話框留給使用者。
+- pgAdmin 先顯示載入視窗、再換成主視窗，且會套用上次的視窗大小；最大化前重新找主視窗，不生效時改調成螢幕工作區大小。
 
 ## 案例紀錄
 
@@ -82,6 +93,23 @@ MSSQL.ps1 的其他設計重點：
 | 目標帳戶 `Administrator@yjcloud.org` 無法登入 | 疑似 AD 網域帳戶；SQL Server 驗證只接受 SQL 登入（該次同時有網路錯誤，未單獨確認） | 改用 SQL 登入 `sa` |
 
 同一發佈主機的觀察：未安裝 RD 工作階段主機角色（`RDS-RD-Server` 為 Available）、Windows 尚未啟用（事件 8198，slui `0x87E10BC6`），RemoteApp 仍可啟動。這不符合正式授權要求。
+
+### 2026-11-19：pgAdmin（PostgreSQL）RemoteApp 代登
+
+環境：pgAdmin 4 9.19 桌面版、PowerShell 7.4.6，RemoteApp 執行帳戶 `sg_svc`，目標 PostgreSQL 18（10.16.10.103，`postgres` 帳戶，未啟用 SSL）。最終代登成功，從啟動到連線約 15 秒。
+
+| 現象 | 原因 | 處理 |
+|---|---|---|
+| SPP Check System：`SSL connection requested. No SSL enabled connection from this host is configured.` | 資產勾了 Use SSL，PostgreSQL 未提供 SSL | 取消勾選 Use SSL（長期應在 PostgreSQL 啟用 SSL） |
+| SPP Check System：`PostgresException 28000` 加亂碼 | PostgreSQL 以 Big5 回傳「no pg_hba.conf entry」，SPP 來源 IP 10.16.10.110 未被放行 | `pg_hba.conf` 加入 SPP 與發佈主機 10.16.10.108 的規則並 reload |
+| `setup.py` 失敗：`no pq wrapper available` | 直接呼叫 pgAdmin 的 Python 時，PATH 沒有 `libpq.dll` 所在的 `runtime` 資料夾 | 腳本呼叫前把該資料夾加入 PATH |
+| `Got unexpected extra argument(s) (- - r e p l a c e)` | PowerShell 的 `if` 運算式把單一元素陣列攤平成字串，展開時被拆成逐字元參數 | 宣告為 `[string[]]` |
+| 日誌中 setup.py 的輸出變成問號 | Python 以 UTF-8 輸出，PowerShell 以 CP950 解碼 | 呼叫期間把 `[Console]::OutputEncoding` 改為 UTF-8 |
+| RemoteApp 只看到黑色視窗，日誌顯示 120 秒內找不到 pgAdmin 視窗 | 黑色視窗是 Launcher 主控台；pgAdmin 實際已啟動，但從 UIA 根節點列舉不到它的視窗 | 改以 Win32 `EnumWindows` 找視窗 |
+| 找到伺服器文字卻沒有可點擊的位置 | 伺服器收合在 Servers 底下，物件樹節點不在 UIA 樹中 | 雙擊 Servers 展開 |
+| 連線失敗：密碼驗證失敗（Big5 亂碼） | 舊版以 `SendKeys` 輸入，按鍵受 CapsLock 或輸入法影響 | 改用 `SendInput` Unicode 輸入 |
+| 找不到 OK 按鈕，改送 Enter | 按鈕名稱為「 OK」，前面有圖示字元 | 改用正規比對 |
+| 視窗偏小，最大化未生效 | 第一次最大化作用在載入視窗；之後 pgAdmin 套用上次的視窗大小 | 最大化前重新找主視窗，不生效時調成螢幕工作區大小 |
 
 ### 2026-11-19：SPS 改良版腳本
 

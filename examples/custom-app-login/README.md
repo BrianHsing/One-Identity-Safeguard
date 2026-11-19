@@ -10,7 +10,7 @@ RemoteApp 代登用的 PowerShell 腳本與安裝元件。
 
 ```text
 custom-app-login/
-├─ scripts/        17 支代登腳本（16 支 Selenium 網頁、1 支 SSMS UI Automation）
+├─ scripts/        18 支代登腳本（16 支 Selenium 網頁、2 支 UI Automation：SSMS、pgAdmin）
 ├─ requirements/   PowerShell 安裝檔、Selenium 模組、配置圖與原始呼叫文字
 └─ manifest.json   23 個原始檔案的大小與 SHA-256
 ```
@@ -21,9 +21,10 @@ custom-app-login/
 |---|---|---|
 | [MSSQL.ps1](scripts/MSSQL.ps1) | SSMS 20（UI Automation） | **改良版，2026-11-19 實測成功** |
 | [SPS.ps1](scripts/SPS.ps1) | SPS 管理網頁（Selenium） | **改良版，2026-11-19 實測成功** |
+| [PGADMIN.ps1](scripts/PGADMIN.ps1) | pgAdmin 4 桌面版連 PostgreSQL（UI Automation） | **改良版，2026-11-19 實測成功** |
 | 其他 15 支 | 各設備管理網頁（Selenium） | 原樣保存的來源範例，未經驗收 |
 
-兩支改良版都會寫階段日誌（不記錄密碼），命令列寫法見 [SOP 步驟 4](../../docs/sop/remoteapp-integration.md#步驟-4在-publisher-建立發佈項目)。
+三支改良版都會寫階段日誌（不記錄密碼），命令列寫法見 [SOP 步驟 4](../../docs/sop/remoteapp-integration.md#步驟-4在-publisher-建立發佈項目)。
 
 > [!WARNING]
 > **使用原始腳本前須先處理以下問題**，不能直接用在多人共用的發佈主機：
@@ -82,7 +83,7 @@ C:\custom\<應用程式>\<應用程式>.ps1                                     
   git show 1b986d8:examples/custom-app-login/scripts/MSSQL.ps1
   ```
 
-- `SPS.ps1` 是之後新增的，不在 manifest 中。
+- `SPS.ps1`、`PGADMIN.ps1` 是之後新增的，不在 manifest 中。
 - 其他腳本、套件與圖片保留來源位元組，應與 manifest 一致。
 
 第三方元件各依原廠授權，本專案不變更其授權條件。
