@@ -240,7 +240,7 @@ Start-SeDriver -Browser Chrome `
 選取對應項目後核對 Name、Full Name、Program Path 及 Command Line。以下以 MSSQL（SSMS 20 代登，腳本 `mssql.ps1`）為例，用於 Launcher／Publisher 設定，不是直接在 PowerShell 視窗執行的指令：
 
 ```text
---cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args "-File C:\custom\mssql\mssql.ps1 -username {username} -password {password} -asset {Target.AssetNetworkAddress} -TrustServerCertificate"
+--cmd "C:\Program Files\PowerShell\7\pwsh.exe" --args "-File C:\custom\mssql\mssql.ps1 -username {username} -password {password} -asset {Target.AssetNetworkAddress} -TrustServerCertificate -ResetProfile"
 ```
 
 命令列分成兩層：`--cmd`、`--args` 由 RemoteApp Launcher 解讀；`--args` 引號內的字串再交給 `pwsh.exe`，其中 `-File` 之後的所有參數都會原樣傳給腳本。pwsh 本身的參數（例如 `-NoProfile`）必須寫在 `-File` 之前。
@@ -254,19 +254,23 @@ Start-SeDriver -Browser Chrome `
 | `-password` | 腳本 | 目標帳戶密碼，由 SPP 帶入 `{password}` | 不是 Windows 發佈主機登入帳密；含空白、`"` 或以 `-` 開頭的密碼會被拆錯，須以測試密碼驗證 |
 | `-asset` | 腳本 | 填入 SSMS「伺服器名稱」，由 SPP 帶入 `{Target.AssetNetworkAddress}` | 非預設埠或具名執行個體須為 `host,port` 或 `host\instance`；不加 scheme |
 | `-TrustServerCertificate` | 腳本（選用） | 勾選「信任伺服器憑證」 | 連線仍加密，但不驗證憑證來源；伺服器憑證已受發佈主機信任時應省略 |
+| `-ResetProfile` | 腳本（選用） | 啟動前清除該帳戶 SSMS 19.x／20.x 的 `UserSettings.xml` 與 `SqlStudio.bin`，讓勾選框與驗證方式回到預設 | 與 `-TrustServerCertificate` 搭配使用；會一併清除伺服器連線紀錄與該帳戶的 SSMS 偏好設定 |
+
+**為什麼兩者要搭配**：SSMS 20.2 的「信任伺服器憑證」勾選框無法以 UI Automation 讀取狀態（日誌顯示「信任伺服器憑證初始狀態：無法讀取」），腳本只能切換、不能指定為勾選。SSMS 會記住上次的勾選狀態，未重設時切換可能把已勾選切回未勾選，出現 `SSL Provider` 的「此憑證鏈結是由不受信任的授權單位發出的」。本案實測：未加 `-ResetProfile` 時因 SSMS 記住先前勾選而看似不需要信任憑證；加上 `-ResetProfile` 回到未勾選後即出現上述憑證錯誤。腳本若判定為憑證錯誤，會關閉錯誤方塊改以第二種方式切換並重試一次。
+
+長期應將 SQL Server 憑證（或其簽發 CA）匯入發佈主機的受信任根憑證授權單位，或改用企業 CA 簽發的憑證；憑證受信任後，兩個參數都可移除。
 
 腳本另支援下列選用參數，未指定時使用預設值：
 
 | 參數 | 預設值 | 用途 |
 |---|---|---|
-| `-ResetProfile` | 關閉 | 啟動前清除 SSMS 19.x／20.x 的 `UserSettings.xml` 與 `SqlStudio.bin`，讓勾選框與驗證方式回到已知狀態 |
 | `-HostNameInCertificate` | 空白 | 填入「憑證中的主機名稱」，用於憑證名稱與連線位址不同時 |
 | `-TimeoutSec` | `120` | 等待 SSMS 主視窗與連線對話框的秒數 |
 | `-LogPath` | `C:\custom\MSSQL\MSSQL.log` | 腳本日誌位置；日誌不記錄密碼 |
 
 需要時直接加在命令列 `--args` 引號內、`-File` 路徑之後。每次放置或搬移腳本，都要核對 `-File` 路徑與腳本實際位置一致；日誌開頭會記錄「腳本位置」，部署後第一次測試先核對這一行。
 
-**命令列長度限制**：本案命令列約 300 字元時，RemoteApp 顯示「無法打開此程式或檔案」，縮短為只傳帳密與資產（約 165 字元）後恢復正常；未逐一還原參數，尚無法確定是長度上限或特定參數所致。上方範例約 189 字元，部署後須實測；只加入實際需要的選用參數，每加一個就重新測試一次。
+**命令列長度限制**：本案命令列約 300 字元時，RemoteApp 顯示「無法打開此程式或檔案」，縮短為只傳帳密與資產（約 165 字元）後恢復正常；未逐一還原參數，尚無法確定是長度上限或特定參數所致。上方範例約 203 字元，部署後須實測；只加入實際需要的選用參數，每加一個就重新測試一次。
 
 **別名須一致**：SPP 存取要求原則的「應用程式別名」必須與 Publisher 的項目名稱相同。本案原則填 `||SSMS`、發佈主機實際為 `MSSQL`，同樣出現「無法打開此程式或檔案」。
 

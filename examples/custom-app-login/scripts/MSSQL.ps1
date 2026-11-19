@@ -353,13 +353,16 @@ function Set-TrustChecked {
     $true
 }
 
-# 錯誤訊息方塊的標題與登入對話框同名，用是否含「確定」按鈕分辨
+# 錯誤訊息方塊的標題與登入對話框同名，且在 UIA 樹中是登入對話框的子元素，
+# 所以登入對話框的子樹裡也找得到「確定」。必須排除含「連線(C)」按鈕的
+# 登入對話框本身，否則錯誤文字會混入登入畫面的標籤（例如「憑證中的主機名稱」）
+# 而被誤判為憑證錯誤。
 function Get-ErrorDialog {
     param($Main)
     $cond = New-Object System.Windows.Automation.PropertyCondition($AE::NameProperty, $UI.Dialog)
     foreach ($w in $Main.FindAll($Desc, $cond)) {
         try {
-            if (Find-ByName $w $UI.OK) { return $w }
+            if ((Find-ByName $w $UI.OK) -and -not (Find-ByName $w $UI.Connect)) { return $w }
         } catch { }
     }
     $null
