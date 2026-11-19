@@ -1,34 +1,88 @@
 # 客製化應用程式代登範例
 
-本目錄保存使用者提供的 PowerShell 代登腳本與 6 個 requirement 檔案。除了 `MSSQL.ps1`（已換成改良版）與新增的 `SPS.ps1` 兩支經實測的改良版之外，其餘來源檔案原樣納入，沒有改動登入邏輯，也不是經驗收的通用部署套件。
+RemoteApp 代登用的 PowerShell 腳本與安裝元件。
 
-部署步驟見 [RemoteApp 整合 SOP](../../docs/sop/remoteapp-integration.md)；各腳本的 asset 格式、限制與排錯案例見 [KB-003：客製化應用程式代登腳本參考](../../docs/kb/custom-app-login-selenium.md)。
+> [!NOTE]
+> - **部署步驟**：[RemoteApp 整合 SOP](../../docs/sop/remoteapp-integration.md)
+> - **各腳本的 asset 格式、限制與排錯案例**：[KB-003：客製化應用程式代登腳本參考](../../docs/kb/custom-app-login-selenium.md)
 
-- `scripts/`：16 支 Selenium 網頁代登腳本（含改良版 `SPS.ps1`）及 1 支 MSSQL／SSMS UI 自動化腳本（改良版 `MSSQL.ps1`）。
-- `requirements/`：PowerShell MSI、Selenium NUPKG／ZIP、兩張配置圖及原始呼叫文字。
-- [manifest.json](manifest.json)：23 個原始檔案的大小及 SHA-256，包含發佈畫面，可核對來源與下載完整性。`MSSQL.ps1` 已換成改良版，與 manifest 不符；原始版本可由 `git show 1b986d8:examples/custom-app-login/scripts/MSSQL.ps1` 取得。
-
-## 取得完整安裝元件
-
-三個大型套件由 Git LFS 管理。複製儲存庫後，在儲存庫目錄執行 `git lfs pull`，並以 manifest 核對雜湊；只取得 LFS 指標文字時不可安裝。GitHub 的一般 ZIP 下載不保證包含實體 LFS 檔案。
-
-PowerShell 7.4.6 與 Selenium 4.0.0-preview3 是來源環境留存版本，不是現行部署版本建議。Google Chrome Dev 安裝檔不在提供的 requirement 目錄內；不能視為完整離線安裝包。第三方元件各依原廠授權，專案不變更其授權條件。
-
-## 現行瀏覽器與 driver 放置方式
-
-依 [RemoteApp SOP 步驟 2](../../docs/sop/remoteapp-integration.md#步驟-2部署-powershell-7selenium-與-chrome-for-testing)，主要配置如下：
+## 目錄內容
 
 ```text
-C:\Automation\chrome\chrome.exe
-C:\Program Files\PowerShell\7\Modules\selenium\assemblies\chromedriver.exe
+custom-app-login/
+├─ scripts/        17 支代登腳本（16 支 Selenium 網頁、1 支 SSMS UI Automation）
+├─ requirements/   PowerShell 安裝檔、Selenium 模組、配置圖與原始呼叫文字
+└─ manifest.json   23 個原始檔案的大小與 SHA-256
 ```
 
-Chrome 使用完整 Chrome for Testing 套件，ChromeDriver 採同一發布版本。若模組有版本子目錄，以實際載入命令所屬模組的 `ModuleBase\assemblies` 為準。部署副本透過 `-BinaryPath` 指定瀏覽器 EXE、`-WebDriverPath` 指定此 assemblies **資料夾**；driver 不必加入 PATH。保存套件的 Chrome 啟動函式也會讀取 `ChromeWebDriver` 環境變數，明確指定路徑可避免選到其他 driver。
+## 建議使用的腳本
 
-更換 driver 前備份並記錄版本、來源及 SHA-256；模組更新、重裝或重新解壓縮可能覆蓋 driver 或改變 ModuleBase，完成後須重新核對並測試。來源 ZIP 附帶的 driver sha256 與實際檔案不一致，詳見 KB，不可直接採信。此規範用於部署副本；`scripts/`、套件及 manifest 保留來源位元組，不在本次文件修訂中更改。
+| 腳本 | 目標 | 狀態 |
+|---|---|---|
+| [MSSQL.ps1](scripts/MSSQL.ps1) | SSMS 20（UI Automation） | **改良版，2026-11-19 實測成功** |
+| [SPS.ps1](scripts/SPS.ps1) | SPS 管理網頁（Selenium） | **改良版，2026-11-19 實測成功** |
+| 其他 15 支 | 各設備管理網頁（Selenium） | 原樣保存的來源範例，未經驗收 |
 
-## 執行前須處理的原始腳本限制
+兩支改良版都會寫階段日誌（不記錄密碼），命令列寫法見 [SOP 步驟 4](../../docs/sop/remoteapp-integration.md#步驟-4在-publisher-建立發佈項目)。
 
-多數網頁腳本會以命令列接收密碼、略過 TLS 憑證錯誤，並在結尾執行 `taskkill /f /im chromedriver.exe`。這可能影響同主機其他代登工作，不能直接當成共用發佈主機的安全完成範本。不要用真實密碼測試命令列或啟用未確認遮罩行為的 debug／Transcript。
+> [!WARNING]
+> **使用原始腳本前須先處理以下問題**，不能直接用在多人共用的發佈主機：
+> - 結尾的 `taskkill /f /im chromedriver.exe` 會結束主機上**所有人**的 chromedriver。
+> - 略過 TLS 憑證錯誤；`DrIP.ps1`、`Synology.ps1` 使用 HTTP。
+> - 沒有指定 Chrome 與 driver 路徑，只用固定秒數等待頁面，也不確認登入結果。
+> - `PVE.ps1` 使用動態 ID，realm 選取器含疑似拼字錯誤 `[namr=realm]`；另有 `pve_auth1.ps1` 可參考。
+>
+> 可參考 `SPS.ps1` 的做法修改。測試時不要使用真實密碼，也不要開啟可能收錄密碼的 debug 或 Transcript。
 
-`PVE.ps1` 使用動態 ID 與疑似拼字錯誤 `[namr=realm]`，另有獨立的 `pve_auth1.ps1`；兩者均保留，不宣稱新版已完全驗收。`MSSQL.ps1` 採 Windows UI Automation，與 Selenium 分開；`-ResetProfile` 會刪除該帳戶 SSMS 19.x／20.x 的 `UserSettings.xml` 與 `SqlStudio.bin`。`SPS.ps1` 只結束自己啟動的 chromedriver。其他原始腳本不具一致的 WhatIf／稽核機制，正式部署前須另行完成修改與驗收。
+## requirements 內容
+
+| 檔案 | 說明 |
+|---|---|
+| `PowerShell-7.4.6-win-x64.msi` | 來源環境的 PowerShell 安裝檔（Git LFS） |
+| `selenium.4.0.0-preview3.nupkg` | PowerShell Gallery 的 Selenium 預覽版模組（Git LFS） |
+| `selenium.zip` | 已整理的模組資料夾，內含的 ChromeDriver 與 NUPKG 不同（Git LFS） |
+| `模組.png`、`更新driver.png` | 原環境的模組與 driver 放置位置 |
+| `pwsh.txt` | 原始的 Launcher 呼叫文字 |
+
+> [!IMPORTANT]
+> 這些是**來源環境的留存版本**，不是現行部署建議；正式部署依支援與安全要求選版。目錄內**沒有** Chrome 安裝檔，現行標準是另從 Google 官方取得 Chrome for Testing，所以這裡不是完整的離線安裝包。
+
+## 取得大型檔案
+
+三個大型套件由 Git LFS 管理。GitHub 網頁的「Download ZIP」不保證包含實體檔案，請用 Git 取得：
+
+```powershell
+git clone https://github.com/BrianHsing/One-Identity-Safeguard.git
+cd One-Identity-Safeguard
+git lfs pull
+```
+
+取得後以 [manifest.json](manifest.json) 核對 SHA-256。只拿到 LFS 指標文字（檔案只有幾百位元組）時不能安裝。
+
+## 部署位置
+
+詳細步驟見 [SOP 步驟 2](../../docs/sop/remoteapp-integration.md#步驟-2部署-powershell-7selenium-與-chrome-for-testing)，標準位置如下：
+
+```text
+C:\Automation\chrome\chrome.exe                                              Chrome for Testing
+C:\Program Files\PowerShell\7\Modules\selenium\assemblies\chromedriver.exe   同版本 ChromeDriver
+C:\custom\<應用程式>\<應用程式>.ps1                                            代登腳本
+```
+
+- Chrome 與 ChromeDriver 必須是同一個發布版本；driver 不必加入 PATH，腳本以 `-BinaryPath`、`-WebDriverPath` 明確指定。
+- 更換 driver 前先備份，記錄版本、來源與 SHA-256。`selenium.zip` 附帶的 `.sha256` 與實際 driver 不符，不能拿來驗收（原因見 KB-003）。
+
+## 檔案完整性
+
+`manifest.json` 記錄的是**原始來源檔案**的雜湊：
+
+- `MSSQL.ps1` 已換成改良版，雜湊會與 manifest 不符。原始版本可這樣取得：
+
+  ```powershell
+  git show 1b986d8:examples/custom-app-login/scripts/MSSQL.ps1
+  ```
+
+- `SPS.ps1` 是之後新增的，不在 manifest 中。
+- 其他腳本、套件與圖片保留來源位元組，應與 manifest 一致。
+
+第三方元件各依原廠授權，本專案不變更其授權條件。
