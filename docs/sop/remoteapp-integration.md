@@ -246,8 +246,8 @@ Start-SeDriver -Browser Chrome `
 | Publisher 別名／SPP 原則別名 | `MSSQL`／`\|\|MSSQL` | `SPS`／`\|\|SPS` |
 | 腳本位置 | `C:\custom\mssql\mssql.ps1` | `C:\custom\sps\sps.ps1` |
 | `-asset` 內容 | SQL Server 名稱，不加 scheme | 主機位址，不加 scheme；腳本自行補 `https://` |
-| 選用參數 | `-TrustServerCertificate`、`-ResetProfile` 等 | 無 |
-| 腳本日誌 | `C:\custom\MSSQL\MSSQL.log` | 無 |
+| 選用參數 | `-TrustServerCertificate`、`-ResetProfile` 等 | `-ChromePath`、`-VerifyCertificate` 等 |
+| 腳本日誌 | `C:\custom\MSSQL\MSSQL.log` | `C:\custom\sps\sps.log` |
 
 命令列分成兩層：`--cmd`、`--args` 由 RemoteApp Launcher 解讀；`--args` 引號內的字串再交給 `pwsh.exe`，其中 `-File` 之後的所有參數都會原樣傳給腳本。pwsh 本身的參數（例如 `-NoProfile`）必須寫在 `-File` 之前。兩個範例共通的參數如下：
 
@@ -296,19 +296,32 @@ Start-SeDriver -Browser Chrome `
 | 參數 | 用途 | 核對重點 |
 |---|---|---|
 | `-username` | SPS 本機帳戶名稱，輸入登入頁的 `local-username` 欄位 | 須為 SPS 本機登入帳戶 |
-| `-asset` | SPS 主機位址，腳本組成 `https://<asset>` 開啟 | 只填主機名稱或 IP，不加 `https://`，避免重複 scheme；非 443 埠須寫成 `host:port` |
+| `-asset` | SPS 主機位址，腳本組成 `https://<asset>` 開啟 | 只填主機名稱或 IP；非 443 埠寫成 `host:port`。已含 `http(s)://` 時腳本不會重複補 scheme |
 
-sps.ps1 為現場既有腳本，流程是開啟 Chrome、等待 2 秒、依元素 ID `local-username`、`local-password` 填入帳密，再按 class 為 `flat primary` 的登入按鈕。與範例一及本文 2.3 節標準相比，有下列差異，正式部署前須評估：
+腳本另支援下列選用參數，未指定時使用預設值：
 
-| 項目 | sps.ps1 現況 | 影響與建議 |
+| 參數 | 預設值 | 用途 |
 |---|---|---|
-| Chrome 與 ChromeDriver 路徑 | 未指定 `-BinaryPath`、`-WebDriverPath` | 依賴 PATH 或模組預設位置，可能用到其他版本的 Chrome 或 driver；建議依 2.3 節明確指定 |
-| 憑證檢查 | 啟動參數含 `ignore-certificate-errors` | 略過 SPS 網頁憑證錯誤，只適合受控測試；SPS 換用受信任憑證後應移除 |
-| 頁面等待 | 固定 `Start-Sleep -Seconds 2` | 頁面載入較慢時會找不到欄位；建議改為等待元素出現 |
-| 元素定位 | 綁定登入頁的 ID 與 class | SPS 升版改版登入頁時須同步修改 |
-| 結束處理 | `taskkill /f /im chromedriver.exe` | 會結束主機上所有使用者的 chromedriver；多人共用主機時須改為只結束自己啟動的程序 |
-| 日誌 | 無 | 失敗時無從判斷停在哪一步；可參考 3.1 節加入階段日誌 |
-| PowerShell 版本 | 未加 `#requires -Version 7.0` | 誤以 Windows PowerShell 5.1 執行時，Selenium 模組可能載入失敗（見 2.3 節） |
+| `-ChromePath` | `C:\Automation\chrome\chrome.exe` | Chrome for Testing 位置；檔案不存在時記錄警告，改由 Selenium 自行尋找 Chrome |
+| `-VerifyCertificate` | 關閉 | 預設帶 `ignore-certificate-errors` 略過 SPS 自簽憑證；SPS 換用受發佈主機信任的憑證後加上此參數，恢復憑證檢查 |
+| `-TimeoutSec` | `30` | 等待登入欄位出現的秒數 |
+| `-LogPath` | `C:\custom\sps\sps.log` | 腳本日誌位置；日誌不記錄密碼 |
+
+範例腳本為 [SPS.ps1](../../examples/custom-app-login/scripts/SPS.ps1)，部署時存為 `C:\custom\sps\sps.ps1`。流程是開啟 Chrome、等待元素 ID `local-username`、`local-password` 與 class 為 `flat primary` 的登入按鈕出現，填入帳密後登入，最後只結束本次啟動的 chromedriver，Chrome 視窗留給使用者繼續操作。相較原現場腳本的調整如下：
+
+| 項目 | 原腳本 | 改良版 |
+|---|---|---|
+| Chrome 與 ChromeDriver 路徑 | 未指定，依賴 PATH 或模組預設位置 | 明確指定 Chrome for Testing 與模組 `assemblies` 內的 driver（2.3 節）；找不到時記錄警告並退回原行為 |
+| 頁面等待 | 固定 `Start-Sleep -Seconds 2` | 每 0.5 秒檢查一次，最多等 `-TimeoutSec` 秒 |
+| 結束處理 | `taskkill /f /im chromedriver.exe`，會結束主機上所有使用者的 chromedriver | 只結束父程序為本腳本的 chromedriver，不影響其他工作階段 |
+| 登入結果 | 未確認 | 按下登入後最多等 10 秒，確認是否離開登入頁並寫入日誌；不中止腳本 |
+| 日誌 | 無 | 記錄腳本位置、Chrome／ChromeDriver 版本、各階段與結果 |
+| PowerShell 版本 | 未限制 | `#requires -Version 7.0` |
+| 憑證檢查 | 固定略過 | 預設仍略過；可用 `-VerifyCertificate` 恢復 |
+
+元素定位仍綁定 SPS 登入頁的 ID 與 class，SPS 升版改版登入頁時須同步修改。
+
+本案測試成功：Chrome for Testing 與 ChromeDriver 同為 155.0.8059.79，登入欄位於 driver 啟動後 1 秒內出現，按下登入後 1 秒內離開登入頁，並只結束本次啟動的 chromedriver。該次測試的執行帳戶為 `Administrator`；若 SPS 原則實際以其他帳戶登入發佈主機，須再以該 RemoteApp 帳戶經 `||SPS` 驗收一次，確認可讀取 Chrome 與 Selenium 模組、可寫入日誌。
 
 ##### 兩個範例共通的注意事項
 
